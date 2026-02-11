@@ -9,10 +9,16 @@ import {
   BarChart3,
   Menu,
   X,
-  DollarSign,
+  User,
+  LogOut,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
+import MoneyLogo from "@/components/MoneyLogo";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -21,6 +27,7 @@ const navItems = [
   { path: "/bancos", label: "Bancos", icon: Landmark },
   { path: "/investimentos", label: "Investimentos", icon: TrendingUp },
   { path: "/relatorios", label: "Relatórios", icon: BarChart3 },
+  { path: "/perfil", label: "Perfil", icon: User },
 ];
 
 interface AppLayoutProps {
@@ -30,16 +37,14 @@ interface AppLayoutProps {
 const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 gradient-dark text-sidebar-foreground fixed h-full z-30">
-        <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
-          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-            <DollarSign className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="font-display text-xl font-bold text-sidebar-foreground">Money</span>
+        <div className="flex items-center justify-between px-6 py-6 border-b border-sidebar-border">
+          <MoneyLogo />
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map((item) => {
@@ -61,25 +66,42 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             );
           })}
         </nav>
-        <div className="px-4 py-4 border-t border-sidebar-border">
-          <p className="text-xs text-sidebar-foreground/50 text-center">Money © 2026</p>
+        <div className="px-4 py-4 border-t border-sidebar-border space-y-2">
+          <Button
+            variant="ghost"
+            onClick={toggleTheme}
+            className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            {theme === "light" ? "Modo Escuro" : "Modo Claro"}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <LogOut className="w-5 h-5" />
+            Sair
+          </Button>
+          <p className="text-xs text-sidebar-foreground/50 text-center mt-2">Money © 2026</p>
         </div>
       </aside>
 
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 gradient-dark flex items-center justify-between px-4 z-40">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-            <DollarSign className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="font-display text-lg font-bold text-secondary-foreground">Money</span>
+          <MoneyLogo size="sm" />
         </div>
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="text-secondary-foreground p-2"
-        >
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={toggleTheme} className="text-sidebar-foreground p-2">
+            {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+          </button>
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="text-sidebar-foreground p-2"
+          >
+            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </header>
 
       {/* Mobile Menu Overlay */}
@@ -100,7 +122,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
                     active
                       ? "gradient-primary text-primary-foreground"
-                      : "text-secondary-foreground/70 hover:text-secondary-foreground hover:bg-sidebar-accent"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   )}
                 >
                   <item.icon className="w-5 h-5" />
@@ -108,6 +130,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 </Link>
               );
             })}
+            <button className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full">
+              <LogOut className="w-5 h-5" />
+              Sair
+            </button>
           </div>
         </div>
       )}
