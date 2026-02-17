@@ -29,7 +29,24 @@ export interface Bank {
   nome: string;
   saldo: number;
   cor: string;
+  logo?: string;
 }
+
+export const BANK_LOGOS: Record<string, { name: string; color: string; abbr: string }> = {
+  nubank: { name: "Nubank", color: "hsl(280, 60%, 50%)", abbr: "Nu" },
+  inter: { name: "Inter", color: "hsl(25, 100%, 50%)", abbr: "In" },
+  itau: { name: "Itaú", color: "hsl(30, 100%, 50%)", abbr: "Itaú" },
+  bradesco: { name: "Bradesco", color: "hsl(0, 72%, 50%)", abbr: "Br" },
+  bb: { name: "Banco do Brasil", color: "hsl(45, 100%, 50%)", abbr: "BB" },
+  caixa: { name: "Caixa", color: "hsl(210, 100%, 40%)", abbr: "Cx" },
+  santander: { name: "Santander", color: "hsl(0, 80%, 45%)", abbr: "St" },
+  c6: { name: "C6 Bank", color: "hsl(0, 0%, 10%)", abbr: "C6" },
+  btg: { name: "BTG Pactual", color: "hsl(215, 50%, 18%)", abbr: "BTG" },
+  neon: { name: "Neon", color: "hsl(195, 100%, 50%)", abbr: "Ne" },
+  picpay: { name: "PicPay", color: "hsl(152, 80%, 40%)", abbr: "PP" },
+  mercadopago: { name: "Mercado Pago", color: "hsl(200, 100%, 45%)", abbr: "MP" },
+  outro: { name: "Outro", color: "hsl(215, 20%, 50%)", abbr: "?" },
+};
 
 export interface Bill {
   id: string;
@@ -158,9 +175,29 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const value: FinanceContextType = {
     currentMonth, currentYear, setCurrentMonth, setCurrentYear, currentMesAno,
     transactions,
-    addTransaction: (t) => setTransactions((prev) => [{ ...t, id: uid() }, ...prev]),
+    addTransaction: (t) => {
+      setTransactions((prev) => [{ ...t, id: uid() }, ...prev]);
+      // Auto-deduct/add balance from bank
+      if (t.conta && t.conta !== "Geral") {
+        const bank = banks.find((b) => b.nome === t.conta);
+        if (bank) {
+          const delta = t.tipo === "saida" ? -t.valor : t.valor;
+          setBanks((prev) => prev.map((b) => b.id === bank.id ? { ...b, saldo: b.saldo + delta } : b));
+        }
+      }
+    },
     updateTransaction: (id, t) => setTransactions((prev) => prev.map((x) => (x.id === id ? { ...x, ...t } : x))),
-    deleteTransaction: (id) => setTransactions((prev) => prev.filter((x) => x.id !== id)),
+    deleteTransaction: (id) => {
+      const tx = transactions.find((x) => x.id === id);
+      if (tx && tx.conta && tx.conta !== "Geral") {
+        const bank = banks.find((b) => b.nome === tx.conta);
+        if (bank) {
+          const delta = tx.tipo === "saida" ? tx.valor : -tx.valor;
+          setBanks((prev) => prev.map((b) => b.id === bank.id ? { ...b, saldo: b.saldo + delta } : b));
+        }
+      }
+      setTransactions((prev) => prev.filter((x) => x.id !== id));
+    },
     getMonthTransactions,
     cards,
     addCard: (c) => setCards((prev) => [...prev, { ...c, id: uid() }]),

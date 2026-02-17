@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { Landmark, Plus, ArrowLeftRight, Pencil, Trash2, Check, Clock } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useFinance, Bank, Bill } from "@/contexts/FinanceContext";
+import { useFinance, Bank, BANK_LOGOS } from "@/contexts/FinanceContext";
 import MonthYearSelector from "@/components/MonthYearSelector";
 import ConfirmDialog from "@/components/ConfirmDialog";
-
-const bankColors = ["hsl(280, 60%, 50%)", "hsl(25, 90%, 50%)", "hsl(0, 0%, 15%)", "hsl(0, 72%, 50%)", "hsl(152, 60%, 42%)"];
 
 const Bancos = () => {
   const { banks, addBank, updateBank, deleteBank, getMonthBills, addBill, updateBill, deleteBill, currentMesAno } = useFinance();
@@ -20,17 +18,18 @@ const Bancos = () => {
   const [editingBillId, setEditingBillId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "bank" | "bill"; id: string } | null>(null);
 
-  const [bankForm, setBankForm] = useState({ nome: "", saldo: "", cor: bankColors[0] });
+  const [bankForm, setBankForm] = useState({ nome: "", saldo: "", logo: "nubank" });
   const [billForm, setBillForm] = useState({ desc: "", valor: "", vencimento: "", tipo: "pagar" as "pagar" | "receber" });
 
   const totalSaldo = banks.reduce((acc, b) => acc + b.saldo, 0);
 
-  const resetBankForm = () => { setBankForm({ nome: "", saldo: "", cor: bankColors[0] }); setEditingBankId(null); };
+  const resetBankForm = () => { setBankForm({ nome: "", saldo: "", logo: "nubank" }); setEditingBankId(null); };
   const resetBillForm = () => { setBillForm({ desc: "", valor: "", vencimento: "", tipo: "pagar" }); setEditingBillId(null); };
 
   const handleBankSubmit = () => {
     if (!bankForm.nome) return;
-    const data = { nome: bankForm.nome, saldo: parseFloat(bankForm.saldo) || 0, cor: bankForm.cor };
+    const logoInfo = BANK_LOGOS[bankForm.logo] || BANK_LOGOS.outro;
+    const data = { nome: bankForm.nome, saldo: parseFloat(bankForm.saldo) || 0, cor: logoInfo.color, logo: bankForm.logo };
     if (editingBankId) updateBank(editingBankId, data);
     else addBank(data);
     setBankOpen(false);
@@ -48,6 +47,20 @@ const Bancos = () => {
 
   const contasPagar = monthBills.filter((b) => b.tipo === "pagar");
   const contasReceber = monthBills.filter((b) => b.tipo === "receber");
+
+  const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+
+  const BankLogo = ({ logoKey, size = 40 }: { logoKey?: string; size?: number }) => {
+    const info = BANK_LOGOS[logoKey || "outro"] || BANK_LOGOS.outro;
+    return (
+      <div
+        className="rounded-xl flex items-center justify-center font-bold text-primary-foreground shadow-sm"
+        style={{ width: size, height: size, backgroundColor: info.color, fontSize: size * 0.3 }}
+      >
+        {info.abbr}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -83,19 +96,36 @@ const Bancos = () => {
             <DialogTrigger asChild>
               <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-2"><Plus className="w-4 h-4" /> Nova Conta</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-sm">
+            <DialogContent className="sm:max-w-md">
               <DialogHeader><DialogTitle>{editingBankId ? "Editar Banco" : "Nova Conta Bancária"}</DialogTitle></DialogHeader>
-              <div className="grid gap-3 py-2">
-                <div><Label>Nome do Banco</Label><Input value={bankForm.nome} onChange={(e) => setBankForm({ ...bankForm, nome: e.target.value })} /></div>
-                <div><Label>Saldo Inicial (R$)</Label><Input type="number" step="0.01" value={bankForm.saldo} onChange={(e) => setBankForm({ ...bankForm, saldo: e.target.value })} /></div>
+              <div className="grid gap-4 py-2">
                 <div>
-                  <Label>Cor</Label>
-                  <div className="flex gap-2 mt-1">
-                    {bankColors.map((c) => (
-                      <button key={c} onClick={() => setBankForm({ ...bankForm, cor: c })} className={`w-8 h-8 rounded-full border-2 ${bankForm.cor === c ? "border-primary" : "border-transparent"}`} style={{ backgroundColor: c }} />
+                  <Label>Banco</Label>
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
+                    {Object.entries(BANK_LOGOS).map(([key, info]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setBankForm({ ...bankForm, logo: key, nome: bankForm.nome || info.name });
+                        }}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
+                          bankForm.logo === key ? "border-primary bg-accent" : "border-border hover:border-primary/40"
+                        }`}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-[10px]"
+                          style={{ backgroundColor: info.color }}
+                        >
+                          {info.abbr}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground truncate w-full text-center">{info.name}</span>
+                      </button>
                     ))}
                   </div>
                 </div>
+                <div><Label>Nome da Conta</Label><Input value={bankForm.nome} onChange={(e) => setBankForm({ ...bankForm, nome: e.target.value })} placeholder="Ex: Conta Corrente Nubank" /></div>
+                <div><Label>Saldo Atual (R$)</Label><Input type="number" step="0.01" value={bankForm.saldo} onChange={(e) => setBankForm({ ...bankForm, saldo: e.target.value })} placeholder="0,00" /></div>
                 <Button onClick={handleBankSubmit} className="gradient-primary text-primary-foreground w-full">Salvar</Button>
               </div>
             </DialogContent>
@@ -103,28 +133,38 @@ const Bancos = () => {
         </div>
       </div>
 
-      <div className="gradient-hero rounded-xl p-6 text-primary-foreground">
+      {/* Saldo Total */}
+      <div className="gradient-hero rounded-2xl p-6 text-primary-foreground relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10" style={{ background: "radial-gradient(circle at 80% 20%, white, transparent 50%)" }} />
         <p className="text-sm opacity-80">Saldo Total</p>
-        <p className="text-3xl font-display font-bold mt-1">R$ {totalSaldo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+        <p className="text-3xl font-display font-bold mt-1">{fmt(totalSaldo)}</p>
+        <p className="text-xs opacity-60 mt-1">{banks.length} conta(s) cadastrada(s)</p>
       </div>
 
+      {/* Bank Cards */}
       {banks.length === 0 ? (
         <div className="bg-card rounded-xl p-12 shadow-card text-center text-muted-foreground">Nenhuma conta bancária cadastrada.</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {banks.map((bank) => (
-            <div key={bank.id} className="bg-card rounded-xl p-5 shadow-card animate-fade-in relative group">
+            <div key={bank.id} className="bg-card rounded-2xl p-5 shadow-elevated animate-fade-in relative group border border-border">
               <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => { setBankForm({ nome: bank.nome, saldo: bank.saldo.toString(), cor: bank.cor }); setEditingBankId(bank.id); setBankOpen(true); }} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
+                <button onClick={() => { setBankForm({ nome: bank.nome, saldo: bank.saldo.toString(), logo: bank.logo || "outro" }); setEditingBankId(bank.id); setBankOpen(true); }} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
                 <button onClick={() => setDeleteTarget({ type: "bank", id: bank.id })} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${bank.cor}20` }}>
-                  <Landmark className="w-5 h-5" style={{ color: bank.cor }} />
+              <div className="flex items-center gap-3 mb-4">
+                <BankLogo logoKey={bank.logo} size={44} />
+                <div>
+                  <span className="font-semibold text-foreground text-sm">{bank.nome}</span>
+                  <p className="text-[10px] text-muted-foreground">{BANK_LOGOS[bank.logo || "outro"]?.name || "Banco"}</p>
                 </div>
-                <span className="font-medium text-foreground">{bank.nome}</span>
               </div>
-              <p className="text-xl font-display font-bold text-foreground">R$ {bank.saldo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Saldo disponível</p>
+                  <p className={`text-xl font-display font-bold ${bank.saldo >= 0 ? "text-success" : "text-destructive"}`}>{fmt(bank.saldo)}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -144,7 +184,7 @@ const Bancos = () => {
                   <p className="text-xs text-muted-foreground">Vencimento: {c.vencimento ? new Date(c.vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-destructive">R$ {c.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                  <span className="text-sm font-semibold text-destructive">{fmt(c.valor)}</span>
                   <button onClick={() => updateBill(c.id, { pago: !c.pago })} className={`text-xs px-2 py-1 rounded-full font-medium cursor-pointer ${c.pago ? "bg-accent text-accent-foreground" : "bg-warning/10 text-warning"}`}>
                     {c.pago ? "Pago" : "Pendente"}
                   </button>
@@ -171,7 +211,7 @@ const Bancos = () => {
                   <p className="text-xs text-muted-foreground">Vencimento: {c.vencimento ? new Date(c.vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-success">R$ {c.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                  <span className="text-sm font-semibold text-success">{fmt(c.valor)}</span>
                   <button onClick={() => updateBill(c.id, { pago: !c.pago })} className={`text-xs px-2 py-1 rounded-full font-medium cursor-pointer ${c.pago ? "bg-accent text-accent-foreground" : "bg-warning/10 text-warning"}`}>
                     {c.pago ? "Recebido" : "Pendente"}
                   </button>
