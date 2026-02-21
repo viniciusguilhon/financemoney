@@ -8,15 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useFinance, Card } from "@/contexts/FinanceContext";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-const cardColors = [
-  { name: "Roxo", value: "hsl(280, 60%, 50%)" },
-  { name: "Azul Escuro", value: "hsl(215, 50%, 18%)" },
-  { name: "Preto", value: "hsl(0, 0%, 12%)" },
-  { name: "Verde", value: "hsl(152, 60%, 42%)" },
-  { name: "Dourado", value: "hsl(38, 92%, 55%)" },
-  { name: "Vermelho", value: "hsl(0, 72%, 45%)" },
-  { name: "Azul", value: "hsl(210, 80%, 50%)" },
-];
+const defaultCardColor = "hsl(215, 50%, 18%)";
 
 const bandeiras = ["Mastercard", "Visa", "Elo", "Amex", "Hipercard"];
 
@@ -126,13 +118,13 @@ const Cartoes = () => {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome: "", bandeira: "Mastercard", limite: "", vencimento: "", cor: cardColors[0].value, customImage: "" });
+  const [form, setForm] = useState({ nome: "", bandeira: "Mastercard", limite: "", vencimento: "", faturaAtual: "", customImage: "" });
   const cardImageRef = useRef<HTMLInputElement>(null);
 
-  const resetForm = () => { setForm({ nome: "", bandeira: "Mastercard", limite: "", vencimento: "", cor: cardColors[0].value, customImage: "" }); setEditingId(null); };
+  const resetForm = () => { setForm({ nome: "", bandeira: "Mastercard", limite: "", vencimento: "", faturaAtual: "", customImage: "" }); setEditingId(null); };
 
   const openEdit = (c: Card) => {
-    setForm({ nome: c.nome, bandeira: c.bandeira, limite: c.limite.toString(), vencimento: c.vencimento.toString(), cor: c.cor, customImage: c.customImage || "" });
+    setForm({ nome: c.nome, bandeira: c.bandeira, limite: c.limite.toString(), vencimento: c.vencimento.toString(), faturaAtual: c.usado.toString(), customImage: c.customImage || "" });
     setEditingId(c.id);
     setOpen(true);
   };
@@ -147,7 +139,8 @@ const Cartoes = () => {
 
   const handleSubmit = () => {
     if (!form.nome || !form.limite) return;
-    const data = { nome: form.nome, bandeira: form.bandeira, limite: parseFloat(form.limite), usado: 0, vencimento: parseInt(form.vencimento) || 10, cor: form.cor, customImage: form.customImage || undefined };
+    const faturaAtual = parseFloat(form.faturaAtual) || 0;
+    const data = { nome: form.nome, bandeira: form.bandeira, limite: parseFloat(form.limite), usado: faturaAtual, vencimento: parseInt(form.vencimento) || 10, cor: "hsl(215, 50%, 18%)", customImage: form.customImage || undefined };
     if (editingId) updateCard(editingId, data);
     else addCard(data);
     setOpen(false);
@@ -187,20 +180,9 @@ const Cartoes = () => {
                 </div>
                 <div><Label>Dia Vencimento</Label><Input type="number" min="1" max="31" value={form.vencimento} onChange={(e) => setForm({ ...form, vencimento: e.target.value })} /></div>
               </div>
-              <div><Label>Limite (R$)</Label><Input type="number" step="0.01" value={form.limite} onChange={(e) => setForm({ ...form, limite: e.target.value })} /></div>
-              <div>
-                <Label>Cor do Cartão</Label>
-                <div className="flex gap-2 mt-2 flex-wrap">
-                  {cardColors.map((c) => (
-                    <button
-                      key={c.value}
-                      onClick={() => setForm({ ...form, cor: c.value })}
-                      className={`w-10 h-10 rounded-xl border-2 transition-all ${form.cor === c.value ? "border-primary scale-110" : "border-transparent"}`}
-                      style={{ background: `linear-gradient(135deg, ${c.value}, ${c.value}bb)` }}
-                      title={c.name}
-                    />
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Limite (R$)</Label><Input type="number" step="0.01" value={form.limite} onChange={(e) => setForm({ ...form, limite: e.target.value })} /></div>
+                <div><Label>Fatura Atual (R$)</Label><Input type="number" step="0.01" value={form.faturaAtual} onChange={(e) => setForm({ ...form, faturaAtual: e.target.value })} placeholder="0,00" /></div>
               </div>
               <div>
                 <Label>Imagem do Cartão (opcional)</Label>
