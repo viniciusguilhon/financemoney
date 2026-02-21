@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Pencil, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -18,18 +18,29 @@ const Bancos = () => {
   const [editingBillId, setEditingBillId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "bank" | "bill"; id: string } | null>(null);
 
-  const [bankForm, setBankForm] = useState({ nome: "", saldo: "", logo: "nubank" });
+  const [bankForm, setBankForm] = useState({ nome: "", saldo: "", logo: "nubank", customLogo: "" });
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [billForm, setBillForm] = useState({ desc: "", valor: "", vencimento: "", tipo: "pagar" as "pagar" | "receber" });
 
   const totalSaldo = banks.reduce((acc, b) => acc + b.saldo, 0);
 
-  const resetBankForm = () => { setBankForm({ nome: "", saldo: "", logo: "nubank" }); setEditingBankId(null); };
+  const resetBankForm = () => { setBankForm({ nome: "", saldo: "", logo: "nubank", customLogo: "" }); setEditingBankId(null); };
+  
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBankForm({ ...bankForm, customLogo: reader.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
   const resetBillForm = () => { setBillForm({ desc: "", valor: "", vencimento: "", tipo: "pagar" }); setEditingBillId(null); };
 
   const handleBankSubmit = () => {
     if (!bankForm.nome) return;
     const logoInfo = BANK_LOGOS[bankForm.logo] || BANK_LOGOS.outro;
-    const data = { nome: bankForm.nome, saldo: parseFloat(bankForm.saldo) || 0, cor: logoInfo.color, logo: bankForm.logo };
+    const data = { nome: bankForm.nome, saldo: parseFloat(bankForm.saldo) || 0, cor: logoInfo.color, logo: bankForm.logo, customLogo: bankForm.customLogo || undefined };
     if (editingBankId) updateBank(editingBankId, data);
     else addBank(data);
     setBankOpen(false);
@@ -50,7 +61,10 @@ const Bancos = () => {
 
   const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
-  const BankLogo = ({ logoKey, size = 40 }: { logoKey?: string; size?: number }) => {
+  const BankLogo = ({ logoKey, customLogo, size = 40 }: { logoKey?: string; customLogo?: string; size?: number }) => {
+    if (customLogo) {
+      return <img src={customLogo} alt="Logo" className="rounded-xl object-cover shadow-sm" style={{ width: size, height: size }} />;
+    }
     const info = BANK_LOGOS[logoKey || "outro"] || BANK_LOGOS.outro;
     return (
       <div
@@ -124,6 +138,21 @@ const Bancos = () => {
                     ))}
                   </div>
                 </div>
+                <div>
+                  <Label>Logo Personalizada (opcional)</Label>
+                  <div className="flex items-center gap-3 mt-2">
+                    {bankForm.customLogo && (
+                      <img src={bankForm.customLogo} alt="Logo" className="w-12 h-12 rounded-xl object-cover border border-border" />
+                    )}
+                    <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                    <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => logoInputRef.current?.click()}>
+                      <Upload className="w-4 h-4" /> {bankForm.customLogo ? "Trocar" : "Upload"}
+                    </Button>
+                    {bankForm.customLogo && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setBankForm({ ...bankForm, customLogo: "" })}>Remover</Button>
+                    )}
+                  </div>
+                </div>
                 <div><Label>Nome da Conta</Label><Input value={bankForm.nome} onChange={(e) => setBankForm({ ...bankForm, nome: e.target.value })} placeholder="Ex: Conta Corrente Nubank" /></div>
                 <div><Label>Saldo Atual (R$)</Label><Input type="number" step="0.01" value={bankForm.saldo} onChange={(e) => setBankForm({ ...bankForm, saldo: e.target.value })} placeholder="0,00" /></div>
                 <Button onClick={handleBankSubmit} className="gradient-primary text-primary-foreground w-full">Salvar</Button>
@@ -149,11 +178,11 @@ const Bancos = () => {
           {banks.map((bank) => (
             <div key={bank.id} className="bg-card rounded-2xl p-5 shadow-elevated animate-fade-in relative group border border-border">
               <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => { setBankForm({ nome: bank.nome, saldo: bank.saldo.toString(), logo: bank.logo || "outro" }); setEditingBankId(bank.id); setBankOpen(true); }} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
+                <button onClick={() => { setBankForm({ nome: bank.nome, saldo: bank.saldo.toString(), logo: bank.logo || "outro", customLogo: bank.customLogo || "" }); setEditingBankId(bank.id); setBankOpen(true); }} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
                 <button onClick={() => setDeleteTarget({ type: "bank", id: bank.id })} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
               <div className="flex items-center gap-3 mb-4">
-                <BankLogo logoKey={bank.logo} size={44} />
+                <BankLogo logoKey={bank.logo} customLogo={bank.customLogo} size={44} />
                 <div>
                   <span className="font-semibold text-foreground text-sm">{bank.nome}</span>
                   <p className="text-[10px] text-muted-foreground">{BANK_LOGOS[bank.logo || "outro"]?.name || "Banco"}</p>

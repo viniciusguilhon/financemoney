@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CreditCard, Plus, Pencil, Trash2, Wifi } from "lucide-react";
+import { useState, useRef } from "react";
+import { CreditCard, Plus, Pencil, Trash2, Wifi, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -44,48 +44,52 @@ const VirtualCard = ({ card, onEdit, onDelete }: { card: Card; onEdit: () => voi
   return (
     <div className="relative group">
       {/* Card */}
-      <div
-        className="rounded-2xl p-6 text-white shadow-elevated animate-fade-in relative overflow-hidden aspect-[1.6/1] flex flex-col justify-between"
-        style={{ background: `linear-gradient(135deg, ${card.cor}, ${card.cor}bb, ${card.cor}88)` }}
-      >
-        {/* Glossy overlay */}
-        <div className="absolute inset-0 opacity-15" style={{ background: "radial-gradient(ellipse at 30% 20%, white, transparent 60%)" }} />
-        <div className="absolute top-0 right-0 w-40 h-40 opacity-5" style={{ background: "radial-gradient(circle, white, transparent 70%)" }} />
-
-        {/* Edit/Delete */}
-        <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <button onClick={onEdit} className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm"><Pencil className="w-3.5 h-3.5" /></button>
-          <button onClick={onDelete} className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm"><Trash2 className="w-3.5 h-3.5" /></button>
+      {card.customImage ? (
+        <div className="rounded-2xl shadow-elevated animate-fade-in relative overflow-hidden aspect-[1.6/1]">
+          <img src={card.customImage} alt={card.nome} className="w-full h-full object-cover rounded-2xl" />
+          {/* Edit/Delete overlay */}
+          <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <button onClick={onEdit} className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white"><Pencil className="w-3.5 h-3.5" /></button>
+            <button onClick={onDelete} className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white"><Trash2 className="w-3.5 h-3.5" /></button>
+          </div>
+          <div className="absolute bottom-3 left-4 right-4 flex justify-between items-end">
+            <p className="text-white text-sm font-semibold drop-shadow-lg">{card.nome}</p>
+            <BandeiraLogo bandeira={card.bandeira} size="md" />
+          </div>
         </div>
-
-        {/* Top row */}
-        <div className="flex items-start justify-between relative z-[1]">
-          <div className="flex items-center gap-2">
+      ) : (
+        <div
+          className="rounded-2xl p-6 text-white shadow-elevated animate-fade-in relative overflow-hidden aspect-[1.6/1] flex flex-col justify-between"
+          style={{ background: `linear-gradient(135deg, ${card.cor}, ${card.cor}bb, ${card.cor}88)` }}
+        >
+          <div className="absolute inset-0 opacity-15" style={{ background: "radial-gradient(ellipse at 30% 20%, white, transparent 60%)" }} />
+          <div className="absolute top-0 right-0 w-40 h-40 opacity-5" style={{ background: "radial-gradient(circle, white, transparent 70%)" }} />
+          <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <button onClick={onEdit} className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm"><Pencil className="w-3.5 h-3.5" /></button>
+            <button onClick={onDelete} className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm"><Trash2 className="w-3.5 h-3.5" /></button>
+          </div>
+          <div className="flex items-start justify-between relative z-[1]">
             <Wifi className="w-5 h-5 opacity-70 rotate-90" />
+            <BandeiraLogo bandeira={card.bandeira} size="md" />
           </div>
-          <BandeiraLogo bandeira={card.bandeira} size="md" />
-        </div>
-
-        {/* Chip */}
-        <div className="relative z-[1]">
-          <div className="w-10 h-7 rounded-md bg-gradient-to-br from-yellow-300/80 to-yellow-600/80 mb-3 flex items-center justify-center">
-            <div className="w-6 h-4 rounded-sm border border-yellow-700/30 bg-gradient-to-br from-yellow-200/50 to-yellow-500/50" />
+          <div className="relative z-[1]">
+            <div className="w-10 h-7 rounded-md bg-gradient-to-br from-yellow-300/80 to-yellow-600/80 mb-3 flex items-center justify-center">
+              <div className="w-6 h-4 rounded-sm border border-yellow-700/30 bg-gradient-to-br from-yellow-200/50 to-yellow-500/50" />
+            </div>
+            <p className="text-base font-mono tracking-[0.2em] opacity-90">•••• •••• •••• {String(Math.abs(card.id.charCodeAt(0) * 137 % 10000)).padStart(4, "0")}</p>
           </div>
-          <p className="text-base font-mono tracking-[0.2em] opacity-90">•••• •••• •••• {String(Math.abs(card.id.charCodeAt(0) * 137 % 10000)).padStart(4, "0")}</p>
-        </div>
-
-        {/* Bottom row */}
-        <div className="flex items-end justify-between relative z-[1]">
-          <div>
-            <p className="text-[10px] uppercase opacity-50 tracking-wider">Titular</p>
-            <p className="text-sm font-semibold tracking-wide">{card.nome}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] uppercase opacity-50 tracking-wider">Venc.</p>
-            <p className="text-sm font-mono">{String(card.vencimento).padStart(2, "0")}/••</p>
+          <div className="flex items-end justify-between relative z-[1]">
+            <div>
+              <p className="text-[10px] uppercase opacity-50 tracking-wider">Titular</p>
+              <p className="text-sm font-semibold tracking-wide">{card.nome}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] uppercase opacity-50 tracking-wider">Venc.</p>
+              <p className="text-sm font-mono">{String(card.vencimento).padStart(2, "0")}/••</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Card Info below */}
       <div className="mt-3 bg-card rounded-xl p-4 shadow-card border border-border">
@@ -122,19 +126,28 @@ const Cartoes = () => {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome: "", bandeira: "Mastercard", limite: "", vencimento: "", cor: cardColors[0].value });
+  const [form, setForm] = useState({ nome: "", bandeira: "Mastercard", limite: "", vencimento: "", cor: cardColors[0].value, customImage: "" });
+  const cardImageRef = useRef<HTMLInputElement>(null);
 
-  const resetForm = () => { setForm({ nome: "", bandeira: "Mastercard", limite: "", vencimento: "", cor: cardColors[0].value }); setEditingId(null); };
+  const resetForm = () => { setForm({ nome: "", bandeira: "Mastercard", limite: "", vencimento: "", cor: cardColors[0].value, customImage: "" }); setEditingId(null); };
 
   const openEdit = (c: Card) => {
-    setForm({ nome: c.nome, bandeira: c.bandeira, limite: c.limite.toString(), vencimento: c.vencimento.toString(), cor: c.cor });
+    setForm({ nome: c.nome, bandeira: c.bandeira, limite: c.limite.toString(), vencimento: c.vencimento.toString(), cor: c.cor, customImage: c.customImage || "" });
     setEditingId(c.id);
     setOpen(true);
   };
 
+  const handleCardImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setForm({ ...form, customImage: reader.result as string });
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = () => {
     if (!form.nome || !form.limite) return;
-    const data = { nome: form.nome, bandeira: form.bandeira, limite: parseFloat(form.limite), usado: 0, vencimento: parseInt(form.vencimento) || 10, cor: form.cor };
+    const data = { nome: form.nome, bandeira: form.bandeira, limite: parseFloat(form.limite), usado: 0, vencimento: parseInt(form.vencimento) || 10, cor: form.cor, customImage: form.customImage || undefined };
     if (editingId) updateCard(editingId, data);
     else addCard(data);
     setOpen(false);
@@ -187,6 +200,23 @@ const Cartoes = () => {
                       title={c.name}
                     />
                   ))}
+                </div>
+              </div>
+              <div>
+                <Label>Imagem do Cartão (opcional)</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  {form.customImage && (
+                    <img src={form.customImage} alt="Cartão" className="w-20 h-12 rounded-lg object-cover border border-border" />
+                  )}
+                  <input ref={cardImageRef} type="file" accept="image/*" className="hidden" onChange={handleCardImageUpload} />
+                  <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => cardImageRef.current?.click()}>
+                    <Upload className="w-4 h-4" /> {form.customImage ? "Trocar" : "Upload"}
+                  </Button>
+                  {form.customImage && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, customImage: "" })}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
               <Button onClick={handleSubmit} className="gradient-primary text-primary-foreground w-full">{editingId ? "Salvar" : "Adicionar"}</Button>
