@@ -18,7 +18,6 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
 import MoneyLogo from "@/components/MoneyLogo";
-import { Button } from "@/components/ui/button";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -42,11 +41,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 gradient-dark text-sidebar-foreground fixed h-full z-30">
-        <div className="flex items-center justify-between px-6 py-6 border-b border-sidebar-border">
+      <aside className="hidden md:flex flex-col w-60 bg-sidebar fixed h-full z-30">
+        <div className="flex items-center px-5 py-5">
           <MoneyLogo />
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-2 space-y-0.5">
           {navItems.map((item) => {
             const active = location.pathname === item.path;
             return (
@@ -54,35 +53,31 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-3 px-4 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
                   active
-                    ? "gradient-primary text-primary-foreground shadow-card"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                    ? "bg-primary/15 text-primary"
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className={cn("w-[18px] h-[18px]", active && "text-primary")} />
                 {item.label}
               </Link>
             );
           })}
         </nav>
-        <div className="px-4 py-4 border-t border-sidebar-border space-y-2">
-          <Button
-            variant="ghost"
+        <div className="px-3 py-4 space-y-0.5">
+          <button
             onClick={toggleTheme}
-            className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full transition-colors"
           >
-            {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            {theme === "light" ? <Moon className="w-[18px] h-[18px]" /> : <Sun className="w-[18px] h-[18px]" />}
             {theme === "light" ? "Modo Escuro" : "Modo Claro"}
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <LogOut className="w-5 h-5" />
+          </button>
+          <button className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full transition-colors">
+            <LogOut className="w-[18px] h-[18px]" />
             Sair
-          </Button>
-          <p className="text-xs text-sidebar-foreground/50 text-center mt-2">Money © 2026</p>
+          </button>
+          <p className="text-[10px] text-sidebar-foreground/30 text-center mt-3">Money © 2026</p>
         </div>
       </aside>
 
@@ -159,7 +154,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 pt-16 md:pt-0 pb-20 md:pb-0">
+      <main className="flex-1 md:ml-60 pt-16 md:pt-0 pb-20 md:pb-0">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
           {children}
         </div>
