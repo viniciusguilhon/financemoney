@@ -272,8 +272,8 @@ const Dashboard = () => {
                 return (
                   <div key={b.id} className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-bold text-white" style={{ backgroundColor: info.color }}>
-                        {info.abbr}
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-bold text-white overflow-hidden" style={{ backgroundColor: b.customLogo ? undefined : info.color }}>
+                        {b.customLogo ? <img src={b.customLogo} alt={b.nome} className="w-full h-full object-cover" /> : info.abbr}
                       </div>
                       <div>
                         <span className="text-xs font-medium text-foreground">{b.nome}</span>

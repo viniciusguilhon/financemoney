@@ -22,6 +22,7 @@ export interface Card {
   usado: number;
   vencimento: number;
   cor: string;
+  customImage?: string;
 }
 
 export interface Bank {
@@ -30,6 +31,7 @@ export interface Bank {
   saldo: number;
   cor: string;
   logo?: string;
+  customLogo?: string;
 }
 
 export const BANK_LOGOS: Record<string, { name: string; color: string; abbr: string }> = {
