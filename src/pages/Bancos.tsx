@@ -4,28 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinance, Bank, BANK_LOGOS } from "@/contexts/FinanceContext";
-import MonthYearSelector from "@/components/MonthYearSelector";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 const Bancos = () => {
-  const { banks, addBank, updateBank, deleteBank, getMonthBills, addBill, updateBill, deleteBill, currentMesAno } = useFinance();
-  const monthBills = getMonthBills();
+  const { banks, addBank, updateBank, deleteBank } = useFinance();
   const [bankOpen, setBankOpen] = useState(false);
-  const [billOpen, setBillOpen] = useState(false);
   const [editingBankId, setEditingBankId] = useState<string | null>(null);
-  const [editingBillId, setEditingBillId] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: "bank" | "bill"; id: string } | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [bankForm, setBankForm] = useState({ nome: "", saldo: "", logo: "nubank", customLogo: "" });
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const [billForm, setBillForm] = useState({ desc: "", valor: "", vencimento: "", tipo: "pagar" as "pagar" | "receber" });
 
   const totalSaldo = banks.reduce((acc, b) => acc + b.saldo, 0);
 
   const resetBankForm = () => { setBankForm({ nome: "", saldo: "", logo: "nubank", customLogo: "" }); setEditingBankId(null); };
-  
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -35,7 +29,6 @@ const Bancos = () => {
     };
     reader.readAsDataURL(file);
   };
-  const resetBillForm = () => { setBillForm({ desc: "", valor: "", vencimento: "", tipo: "pagar" }); setEditingBillId(null); };
 
   const handleBankSubmit = () => {
     if (!bankForm.nome) return;
@@ -46,18 +39,6 @@ const Bancos = () => {
     setBankOpen(false);
     resetBankForm();
   };
-
-  const handleBillSubmit = () => {
-    if (!billForm.desc || !billForm.valor) return;
-    const data = { desc: billForm.desc, valor: parseFloat(billForm.valor), vencimento: billForm.vencimento, pago: false, tipo: billForm.tipo, mesAno: currentMesAno };
-    if (editingBillId) updateBill(editingBillId, data);
-    else addBill(data);
-    setBillOpen(false);
-    resetBillForm();
-  };
-
-  const contasPagar = monthBills.filter((b) => b.tipo === "pagar");
-  const contasReceber = monthBills.filter((b) => b.tipo === "receber");
 
   const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
@@ -80,86 +61,62 @@ const Bancos = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Bancos e Contas</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Bancos</h1>
           <p className="text-muted-foreground text-sm mt-1">Gerencie suas contas bancárias</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <MonthYearSelector />
-          <Dialog open={billOpen} onOpenChange={(o) => { setBillOpen(o); if (!o) resetBillForm(); }}>
-            <DialogTrigger asChild><Button variant="outline" className="gap-2"><Plus className="w-4 h-4" /> Conta</Button></DialogTrigger>
-            <DialogContent className="sm:max-w-sm">
-              <DialogHeader><DialogTitle>{editingBillId ? "Editar Conta" : "Nova Conta a Pagar/Receber"}</DialogTitle></DialogHeader>
-              <div className="grid gap-3 py-2">
-                <div><Label>Descrição</Label><Input value={billForm.desc} onChange={(e) => setBillForm({ ...billForm, desc: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Valor (R$)</Label><Input type="number" step="0.01" value={billForm.valor} onChange={(e) => setBillForm({ ...billForm, valor: e.target.value })} /></div>
-                  <div>
-                    <Label>Tipo</Label>
-                    <Select value={billForm.tipo} onValueChange={(v) => setBillForm({ ...billForm, tipo: v as any })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent><SelectItem value="pagar">A Pagar</SelectItem><SelectItem value="receber">A Receber</SelectItem></SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div><Label>Vencimento</Label><Input type="date" value={billForm.vencimento} onChange={(e) => setBillForm({ ...billForm, vencimento: e.target.value })} /></div>
-                <Button onClick={handleBillSubmit} className="gradient-primary text-primary-foreground w-full">Salvar</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={bankOpen} onOpenChange={(o) => { setBankOpen(o); if (!o) resetBankForm(); }}>
-            <DialogTrigger asChild>
-              <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-2"><Plus className="w-4 h-4" /> Nova Conta</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader><DialogTitle>{editingBankId ? "Editar Banco" : "Nova Conta Bancária"}</DialogTitle></DialogHeader>
-              <div className="grid gap-4 py-2">
-                <div>
-                  <Label>Banco</Label>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
-                    {Object.entries(BANK_LOGOS).map(([key, info]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => {
-                          setBankForm({ ...bankForm, logo: key, nome: bankForm.nome || info.name });
-                        }}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
-                          bankForm.logo === key ? "border-primary bg-accent" : "border-border hover:border-primary/40"
-                        }`}
+        <Dialog open={bankOpen} onOpenChange={(o) => { setBankOpen(o); if (!o) resetBankForm(); }}>
+          <DialogTrigger asChild>
+            <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-2"><Plus className="w-4 h-4" /> Nova Conta</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader><DialogTitle>{editingBankId ? "Editar Banco" : "Nova Conta Bancária"}</DialogTitle></DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div>
+                <Label>Banco</Label>
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
+                  {Object.entries(BANK_LOGOS).map(([key, info]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        setBankForm({ ...bankForm, logo: key, nome: bankForm.nome || info.name });
+                      }}
+                      className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
+                        bankForm.logo === key ? "border-primary bg-accent" : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-[10px]"
+                        style={{ backgroundColor: info.color }}
                       >
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-[10px]"
-                          style={{ backgroundColor: info.color }}
-                        >
-                          {info.abbr}
-                        </div>
-                        <span className="text-[10px] text-muted-foreground truncate w-full text-center">{info.name}</span>
-                      </button>
-                    ))}
-                  </div>
+                        {info.abbr}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground truncate w-full text-center">{info.name}</span>
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <Label>Logo Personalizada (opcional)</Label>
-                  <div className="flex items-center gap-3 mt-2">
-                    {bankForm.customLogo && (
-                      <img src={bankForm.customLogo} alt="Logo" className="w-12 h-12 rounded-xl object-cover border border-border" />
-                    )}
-                    <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                    <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => logoInputRef.current?.click()}>
-                      <Upload className="w-4 h-4" /> {bankForm.customLogo ? "Trocar" : "Upload"}
-                    </Button>
-                    {bankForm.customLogo && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setBankForm({ ...bankForm, customLogo: "" })}>Remover</Button>
-                    )}
-                  </div>
-                </div>
-                <div><Label>Nome da Conta</Label><Input value={bankForm.nome} onChange={(e) => setBankForm({ ...bankForm, nome: e.target.value })} placeholder="Ex: Conta Corrente Nubank" /></div>
-                <div><Label>Saldo Atual (R$)</Label><Input type="number" step="0.01" value={bankForm.saldo} onChange={(e) => setBankForm({ ...bankForm, saldo: e.target.value })} placeholder="0,00" /></div>
-                <Button onClick={handleBankSubmit} className="gradient-primary text-primary-foreground w-full">Salvar</Button>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              <div>
+                <Label>Logo Personalizada (opcional)</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  {bankForm.customLogo && (
+                    <img src={bankForm.customLogo} alt="Logo" className="w-12 h-12 rounded-xl object-cover border border-border" />
+                  )}
+                  <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => logoInputRef.current?.click()}>
+                    <Upload className="w-4 h-4" /> {bankForm.customLogo ? "Trocar" : "Upload"}
+                  </Button>
+                  {bankForm.customLogo && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setBankForm({ ...bankForm, customLogo: "" })}>Remover</Button>
+                  )}
+                </div>
+              </div>
+              <div><Label>Nome da Conta</Label><Input value={bankForm.nome} onChange={(e) => setBankForm({ ...bankForm, nome: e.target.value })} placeholder="Ex: Conta Corrente Nubank" /></div>
+              <div><Label>Saldo Atual (R$)</Label><Input type="number" step="0.01" value={bankForm.saldo} onChange={(e) => setBankForm({ ...bankForm, saldo: e.target.value })} placeholder="0,00" /></div>
+              <Button onClick={handleBankSubmit} className="gradient-primary text-primary-foreground w-full">Salvar</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Saldo Total */}
@@ -179,7 +136,7 @@ const Bancos = () => {
             <div key={bank.id} className="bg-card rounded-2xl p-5 shadow-elevated animate-fade-in relative group border border-border">
               <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={() => { setBankForm({ nome: bank.nome, saldo: bank.saldo.toString(), logo: bank.logo || "outro", customLogo: bank.customLogo || "" }); setEditingBankId(bank.id); setBankOpen(true); }} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
-                <button onClick={() => setDeleteTarget({ type: "bank", id: bank.id })} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setDeleteId(bank.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
               <div className="flex items-center gap-3 mb-4">
                 <BankLogo logoKey={bank.logo} customLogo={bank.customLogo} size={44} />
@@ -199,70 +156,10 @@ const Bancos = () => {
         </div>
       )}
 
-      {/* Contas a Pagar */}
-      <div className="bg-card rounded-xl p-5 shadow-card">
-        <h3 className="font-display font-semibold text-foreground mb-4">Contas a Pagar</h3>
-        {contasPagar.length === 0 ? (
-          <p className="text-muted-foreground text-sm text-center py-4">Nenhuma conta a pagar neste mês.</p>
-        ) : (
-          <div className="divide-y divide-border">
-            {contasPagar.map((c) => (
-              <div key={c.id} className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{c.desc}</p>
-                  <p className="text-xs text-muted-foreground">Vencimento: {c.vencimento ? new Date(c.vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-destructive">{fmt(c.valor)}</span>
-                  <button onClick={() => updateBill(c.id, { pago: !c.pago })} className={`text-xs px-2 py-1 rounded-full font-medium cursor-pointer ${c.pago ? "bg-accent text-accent-foreground" : "bg-warning/10 text-warning"}`}>
-                    {c.pago ? "Pago" : "Pendente"}
-                  </button>
-                  <button onClick={() => { setBillForm({ desc: c.desc, valor: c.valor.toString(), vencimento: c.vencimento, tipo: c.tipo }); setEditingBillId(c.id); setBillOpen(true); }} className="p-1 rounded hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setDeleteTarget({ type: "bill", id: c.id })} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Contas a Receber */}
-      <div className="bg-card rounded-xl p-5 shadow-card">
-        <h3 className="font-display font-semibold text-foreground mb-4">Contas a Receber</h3>
-        {contasReceber.length === 0 ? (
-          <p className="text-muted-foreground text-sm text-center py-4">Nenhuma conta a receber neste mês.</p>
-        ) : (
-          <div className="divide-y divide-border">
-            {contasReceber.map((c) => (
-              <div key={c.id} className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{c.desc}</p>
-                  <p className="text-xs text-muted-foreground">Vencimento: {c.vencimento ? new Date(c.vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-success">{fmt(c.valor)}</span>
-                  <button onClick={() => updateBill(c.id, { pago: !c.pago })} className={`text-xs px-2 py-1 rounded-full font-medium cursor-pointer ${c.pago ? "bg-accent text-accent-foreground" : "bg-warning/10 text-warning"}`}>
-                    {c.pago ? "Recebido" : "Pendente"}
-                  </button>
-                  <button onClick={() => { setBillForm({ desc: c.desc, valor: c.valor.toString(), vencimento: c.vencimento, tipo: c.tipo }); setEditingBillId(c.id); setBillOpen(true); }} className="p-1 rounded hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setDeleteTarget({ type: "bill", id: c.id })} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       <ConfirmDialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-        onConfirm={() => {
-          if (deleteTarget) {
-            if (deleteTarget.type === "bank") deleteBank(deleteTarget.id);
-            else deleteBill(deleteTarget.id);
-            setDeleteTarget(null);
-          }
-        }}
+        open={!!deleteId}
+        onOpenChange={(o) => !o && setDeleteId(null)}
+        onConfirm={() => { if (deleteId) { deleteBank(deleteId); setDeleteId(null); } }}
       />
     </div>
   );
