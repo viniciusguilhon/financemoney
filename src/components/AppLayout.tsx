@@ -17,6 +17,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import MoneyLogo from "@/components/MoneyLogo";
 
 const navItems = [
@@ -37,6 +38,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { signOut } = useAuth();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -73,7 +75,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             {theme === "light" ? <Moon className="w-[18px] h-[18px]" /> : <Sun className="w-[18px] h-[18px]" />}
             {theme === "light" ? "Modo Escuro" : "Modo Claro"}
           </button>
-          <button className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full transition-colors">
+          <button
+            onClick={signOut}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full transition-colors"
+          >
             <LogOut className="w-[18px] h-[18px]" />
             Sair
           </button>
@@ -81,8 +86,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         </div>
       </aside>
 
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 gradient-dark flex items-center justify-between px-4 z-40">
+      {/* Mobile Header - Fixed: use bg-sidebar instead of gradient-dark */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 z-40">
         <div className="flex items-center gap-2">
           <MoneyLogo size="sm" />
         </div>
@@ -103,7 +108,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-30 bg-foreground/50" onClick={() => setMobileOpen(false)}>
           <div
-            className="absolute top-16 left-0 right-0 gradient-dark p-4 space-y-1 animate-fade-in"
+            className="absolute top-16 left-0 right-0 bg-sidebar border-b border-sidebar-border p-4 space-y-1 animate-fade-in"
             onClick={(e) => e.stopPropagation()}
           >
             {navItems.map((item) => {
@@ -116,7 +121,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
                     active
-                      ? "gradient-primary text-primary-foreground"
+                      ? "bg-primary/15 text-primary"
                       : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   )}
                 >
@@ -125,7 +130,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 </Link>
               );
             })}
-            <button className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full">
+            <button
+              onClick={() => { setMobileOpen(false); signOut(); }}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full"
+            >
               <LogOut className="w-5 h-5" />
               Sair
             </button>
