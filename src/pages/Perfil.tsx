@@ -1,17 +1,61 @@
-import { useState } from "react";
-import { User, Mail, Lock, Palette, Trash2, Camera } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Mail, Lock, Palette, Trash2, Camera, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { toast } from "@/hooks/use-toast";
 
 const Perfil = () => {
   const { theme, toggleTheme } = useTheme();
-  const [name, setName] = useState("Usuário");
-  const [email, setEmail] = useState("usuario@email.com");
+  const { user, signOut } = useAuth();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [showPw, setShowPw] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setEmail(user.email || "");
+      // Load profile name
+      supabase.from("profiles").select("nome").eq("id", user.id).single().then(({ data }) => {
+        if (data) setName(data.nome || "");
+      });
+    }
+  }, [user]);
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    await supabase.from("profiles").update({ nome: name }).eq("id", user.id);
+    toast({ title: "Perfil atualizado!" });
+  };
+
+  const handleChangePassword = async () => {
+    if (newPw.length < 6) {
+      toast({ title: "Senha deve ter pelo menos 6 caracteres", variant: "destructive" });
+      return;
+    }
+    if (newPw !== confirmPw) {
+      toast({ title: "Senhas não coincidem", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPw });
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Senha alterada com sucesso!" });
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -30,7 +74,7 @@ const Perfil = () => {
             </button>
           </div>
           <div>
-            <p className="text-lg font-display font-bold text-foreground">{name}</p>
+            <p className="text-lg font-display font-bold text-foreground">{name || "Usuário"}</p>
             <p className="text-sm text-muted-foreground">{email}</p>
           </div>
         </div>
@@ -48,9 +92,9 @@ const Perfil = () => {
           </div>
           <div>
             <Label>Email</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input type="email" value={email} disabled className="opacity-60" />
           </div>
-          <Button className="gradient-primary text-primary-foreground w-fit">Salvar Alterações</Button>
+          <Button onClick={handleSaveProfile} className="gradient-primary text-primary-foreground w-fit">Salvar Alterações</Button>
         </div>
       </div>
 
@@ -60,10 +104,20 @@ const Perfil = () => {
           <Lock className="w-5 h-5 text-primary" /> Alterar Senha
         </h3>
         <div className="grid gap-4">
-          <div><Label>Senha Atual</Label><Input type="password" /></div>
-          <div><Label>Nova Senha</Label><Input type="password" /></div>
-          <div><Label>Confirmar Nova Senha</Label><Input type="password" /></div>
-          <Button className="gradient-primary text-primary-foreground w-fit">Alterar Senha</Button>
+          <div>
+            <Label>Nova Senha</Label>
+            <div className="relative">
+              <Input type={showPw ? "text" : "password"} value={newPw} onChange={(e) => setNewPw(e.target.value)} className="pr-10" />
+              <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <Label>Confirmar Nova Senha</Label>
+            <Input type={showPw ? "text" : "password"} value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
+          </div>
+          <Button onClick={handleChangePassword} className="gradient-primary text-primary-foreground w-fit">Alterar Senha</Button>
         </div>
       </div>
 
@@ -93,7 +147,7 @@ const Perfil = () => {
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onConfirm={() => setDeleteOpen(false)}
+        onConfirm={() => { setDeleteOpen(false); signOut(); }}
         title="Excluir conta?"
         description="Esta ação é irreversível. Todos os seus dados serão permanentemente removidos."
       />
