@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_templates: {
+        Row: {
+          abbr: string
+          cor: string
+          created_at: string
+          id: string
+          logo_url: string | null
+          nome: string
+        }
+        Insert: {
+          abbr?: string
+          cor?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          nome: string
+        }
+        Update: {
+          abbr?: string
+          cor?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          nome?: string
+        }
+        Relationships: []
+      }
       banks: {
         Row: {
           cor: string
@@ -80,6 +107,30 @@ export type Database = {
           user_id?: string
           valor?: number
           vencimento?: string | null
+        }
+        Relationships: []
+      }
+      card_templates: {
+        Row: {
+          bandeira: string
+          created_at: string
+          id: string
+          image_url: string | null
+          nome: string
+        }
+        Insert: {
+          bandeira?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          nome: string
+        }
+        Update: {
+          bandeira?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          nome?: string
         }
         Relationships: []
       }
