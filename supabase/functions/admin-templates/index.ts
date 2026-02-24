@@ -47,7 +47,8 @@ Deno.serve(async (req) => {
         // Upload image to storage
         const { fileName, fileBase64, contentType } = body;
         const fileBytes = Uint8Array.from(atob(fileBase64), (c) => c.charCodeAt(0));
-        const path = `${type}s/${Date.now()}-${fileName}`;
+        const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const path = `${type}s/${Date.now()}-${sanitizedName}`;
         const { error: uploadError } = await supabase.storage
           .from("template-images")
           .upload(path, fileBytes, { contentType, upsert: true });

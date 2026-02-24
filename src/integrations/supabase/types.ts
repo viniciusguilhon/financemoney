@@ -257,6 +257,42 @@ export type Database = {
         }
         Relationships: []
       }
+      savings_goals: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          image_url: string | null
+          nome: string
+          updated_at: string
+          user_id: string
+          valor_alvo: number
+          valor_atual: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          image_url?: string | null
+          nome: string
+          updated_at?: string
+          user_id: string
+          valor_alvo?: number
+          valor_atual?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          image_url?: string | null
+          nome?: string
+          updated_at?: string
+          user_id?: string
+          valor_alvo?: number
+          valor_atual?: number
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           categoria: string

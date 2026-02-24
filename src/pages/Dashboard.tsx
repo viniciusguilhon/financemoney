@@ -1,9 +1,13 @@
+import { useState, useEffect } from "react";
 import {
   TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowUpRight, ArrowDownRight,
-  CreditCard, Landmark, BarChart3, Receipt, Target, DollarSign, ShieldCheck,
+  CreditCard, Landmark, BarChart3, Receipt, Target, DollarSign, ShieldCheck, User,
 } from "lucide-react";
 import MonthYearSelector from "@/components/MonthYearSelector";
 import { useFinance, BANK_LOGOS } from "@/contexts/FinanceContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Progress } from "@/components/ui/progress";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, AreaChart, Area,
@@ -12,8 +16,22 @@ import {
 const Dashboard = () => {
   const {
     getMonthTransactions, currentMonth, currentYear, transactions,
-    cards, banks, investments, getMonthBills,
+    cards, banks, investments, getMonthBills, savingsGoals,
   } = useFinance();
+  const { user } = useAuth();
+  const [userName, setUserName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single().then(({ data }) => {
+        if (data) {
+          setUserName(data.nome || "");
+          setAvatarUrl(data.avatar_url || null);
+        }
+      });
+    }
+  }, [user]);
 
   const monthTx = getMonthTransactions();
   const monthBills = getMonthBills();
@@ -37,7 +55,6 @@ const Dashboard = () => {
   const txPagas = monthTx.filter((t) => t.pago).length;
   const txTotal = monthTx.length;
 
-  // Chart data: last 6 months
   const chartData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(currentYear, currentMonth - 1 - (5 - i), 1);
     const mesAno = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -48,7 +65,6 @@ const Dashboard = () => {
     return { mes: monthNames[d.getMonth()], receitas: rec, despesas: desp, saldo: rec - desp };
   });
 
-  // Category spending ranking
   const catMap = new Map<string, number>();
   monthTx.filter((t) => t.tipo === "saida").forEach((t) => {
     catMap.set(t.categoria, (catMap.get(t.categoria) || 0) + t.valor);
@@ -78,49 +94,32 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
+      {/* Header with greeting */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">{monthNames[currentMonth - 1]} de {currentYear}</p>
+        <div className="flex items-center gap-4">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover border-2 border-primary/30" />
+          ) : (
+            <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-primary-foreground">
+              <User className="w-6 h-6" />
+            </div>
+          )}
+          <div>
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
+              Olá, {userName || "Usuário"} 👋
+            </h1>
+            <p className="text-sm text-muted-foreground">{monthNames[currentMonth - 1]} de {currentYear}</p>
+          </div>
         </div>
         <MonthYearSelector />
       </div>
 
       {/* Hero KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <HeroKpi
-          label="Saldo do Mês"
-          value={fmt(saldo)}
-          icon={<Wallet className="w-5 h-5" />}
-          trend={saldo >= 0 ? "positive" : "negative"}
-          detail={saldo >= 0 ? "Positivo" : "Negativo"}
-          gradient="from-emerald-500 to-emerald-700"
-        />
-        <HeroKpi
-          label="Receitas"
-          value={fmt(receitas)}
-          icon={<TrendingUp className="w-5 h-5" />}
-          trend="positive"
-          detail={`${monthTx.filter(t => t.tipo === "entrada").length} entradas`}
-          gradient="from-blue-500 to-blue-700"
-        />
-        <HeroKpi
-          label="Despesas"
-          value={fmt(despesas)}
-          icon={<TrendingDown className="w-5 h-5" />}
-          trend="negative"
-          detail={`${monthTx.filter(t => t.tipo === "saida").length} saídas`}
-          gradient="from-red-500 to-red-700"
-        />
-        <HeroKpi
-          label="Economia"
-          value={fmt(saldo)}
-          icon={<PiggyBank className="w-5 h-5" />}
-          trend={saldo >= 0 ? "positive" : "negative"}
-          detail={receitas > 0 ? `${((saldo / receitas) * 100).toFixed(0)}% das receitas` : "—"}
-          gradient="from-amber-500 to-orange-600"
-        />
+        <HeroKpi label="Saldo do Mês" value={fmt(saldo)} icon={<Wallet className="w-5 h-5" />} trend={saldo >= 0 ? "positive" : "negative"} detail={saldo >= 0 ? "Positivo" : "Negativo"} gradient="from-emerald-500 to-emerald-700" />
+        <HeroKpi label="Receitas" value={fmt(receitas)} icon={<TrendingUp className="w-5 h-5" />} trend="positive" detail={`${monthTx.filter(t => t.tipo === "entrada").length} entradas`} gradient="from-blue-500 to-blue-700" />
+        <HeroKpi label="Despesas" value={fmt(despesas)} icon={<TrendingDown className="w-5 h-5" />} trend="negative" detail={`${monthTx.filter(t => t.tipo === "saida").length} saídas`} gradient="from-red-500 to-red-700" />
+        <HeroKpi label="Economia" value={fmt(saldo)} icon={<PiggyBank className="w-5 h-5" />} trend={saldo >= 0 ? "positive" : "negative"} detail={receitas > 0 ? `${((saldo / receitas) * 100).toFixed(0)}% das receitas` : "—"} gradient="from-amber-500 to-orange-600" />
       </div>
 
       {/* Secondary KPIs */}
@@ -132,6 +131,45 @@ const Dashboard = () => {
         <InfoCard icon={<Target className="w-4 h-4 text-primary" />} label="Investimentos" value={fmt(totalInvestido)} accent="primary" extra={`Retorno: ${rentabilidade}%`} />
         <InfoCard icon={<ShieldCheck className="w-4 h-4 text-success" />} label="Status Mês" value={`${txPagas}/${txTotal}`} accent="success" extra="pagos/total" />
       </div>
+
+      {/* Savings Goals Block */}
+      {savingsGoals.length > 0 && (
+        <div className="bg-card rounded-2xl p-5 shadow-card border border-border">
+          <h3 className="font-display font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
+            <Target className="w-4 h-4 text-primary" /> Metas de Economia
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {savingsGoals.map((goal) => {
+              const pct = goal.valorAlvo > 0 ? Math.min((goal.valorAtual / goal.valorAlvo) * 100, 100) : 0;
+              return (
+                <div key={goal.id} className="bg-muted/50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    {goal.imageUrl ? (
+                      <img src={goal.imageUrl} alt={goal.nome} className="w-14 h-14 rounded-xl object-cover border border-border flex-shrink-0" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Target className="w-6 h-6 text-primary" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{goal.nome}</p>
+                      <p className="text-xs text-muted-foreground truncate">{goal.descricao}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs mb-1.5">
+                      <span className="text-muted-foreground">{fmt(goal.valorAtual)}</span>
+                      <span className="font-semibold text-foreground">{fmt(goal.valorAlvo)}</span>
+                    </div>
+                    <Progress value={pct} className="h-2.5" />
+                    <p className="text-xs text-primary font-semibold mt-1">{pct.toFixed(0)}% concluído</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -170,7 +208,6 @@ const Dashboard = () => {
 
       {/* Middle Row: Rankings + Pie */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Ranking de Gastos */}
         <div className="bg-card rounded-2xl p-5 shadow-card border border-border">
           <h3 className="font-display font-semibold text-foreground text-sm mb-3 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-destructive" /> Maiores Gastos
@@ -198,7 +235,6 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Ranking de Rendas */}
         <div className="bg-card rounded-2xl p-5 shadow-card border border-border">
           <h3 className="font-display font-semibold text-foreground text-sm mb-3 flex items-center gap-2">
             <ArrowUpRight className="w-4 h-4 text-success" /> Maiores Receitas
@@ -226,7 +262,6 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Pie Chart */}
         <div className="bg-card rounded-2xl p-5 shadow-card border border-border">
           <h3 className="font-display font-semibold text-foreground text-sm mb-3">Gastos por Categoria</h3>
           {pieData.length === 0 ? (
@@ -258,7 +293,6 @@ const Dashboard = () => {
 
       {/* Bottom Row: Banks + Cards + Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Bancos */}
         <div className="bg-card rounded-2xl p-5 shadow-card border border-border">
           <h3 className="font-display font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
             <Landmark className="w-4 h-4 text-primary" /> Contas Bancárias
@@ -292,7 +326,6 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Cartões */}
         <div className="bg-card rounded-2xl p-5 shadow-card border border-border">
           <h3 className="font-display font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
             <CreditCard className="w-4 h-4 text-warning" /> Cartões de Crédito
@@ -330,7 +363,6 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Últimas Transações */}
         <div className="bg-card rounded-2xl p-5 shadow-card border border-border">
           <h3 className="font-display font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
             <Receipt className="w-4 h-4 text-primary" /> Últimas Transações

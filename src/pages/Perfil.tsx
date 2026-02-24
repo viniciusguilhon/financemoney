@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { User, Mail, Lock, Palette, Trash2, Camera, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { User, Lock, Palette, Trash2, Camera, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,18 +15,22 @@ const Perfil = () => {
   const { user, signOut } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
       setEmail(user.email || "");
-      // Load profile name
-      supabase.from("profiles").select("nome").eq("id", user.id).single().then(({ data }) => {
-        if (data) setName(data.nome || "");
+      supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single().then(({ data }) => {
+        if (data) {
+          setName(data.nome || "");
+          setAvatarUrl(data.avatar_url || null);
+        }
       });
     }
   }, [user]);
@@ -35,6 +39,29 @@ const Perfil = () => {
     if (!user) return;
     await supabase.from("profiles").update({ nome: name }).eq("id", user.id);
     toast({ title: "Perfil atualizado!" });
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+      const newUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      await supabase.from("profiles").update({ avatar_url: newUrl }).eq("id", user.id);
+      setAvatarUrl(newUrl);
+      toast({ title: "Foto atualizada!" });
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar foto", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -51,7 +78,6 @@ const Perfil = () => {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Senha alterada com sucesso!" });
-      setCurrentPw("");
       setNewPw("");
       setConfirmPw("");
     }
@@ -67,15 +93,27 @@ const Perfil = () => {
       {/* Avatar */}
       <div className="bg-card rounded-xl p-6 shadow-card">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center text-primary-foreground relative">
-            <User className="w-10 h-10" />
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-card shadow-card flex items-center justify-center border border-border">
-              <Camera className="w-3.5 h-3.5 text-muted-foreground" />
+          <div className="w-20 h-20 rounded-full relative overflow-hidden">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full gradient-primary flex items-center justify-center text-primary-foreground">
+                <User className="w-10 h-10" />
+              </div>
+            )}
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+            >
+              <Camera className="w-5 h-5 text-white" />
             </button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </div>
           <div>
             <p className="text-lg font-display font-bold text-foreground">{name || "Usuário"}</p>
             <p className="text-sm text-muted-foreground">{email}</p>
+            {uploading && <p className="text-xs text-primary mt-1">Enviando foto...</p>}
           </div>
         </div>
       </div>
