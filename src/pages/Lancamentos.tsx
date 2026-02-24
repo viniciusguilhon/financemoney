@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Plus, Search, ArrowUpRight, ArrowDownRight, Check, Clock, Pencil, Trash2, Receipt, Target, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import MonthYearSelector from "@/components/MonthYearSelector";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ImageCropper from "@/components/ImageCropper";
 
 const Lancamentos = () => {
   const {
@@ -47,6 +48,8 @@ const Lancamentos = () => {
   const [goalImageFile, setGoalImageFile] = useState<File | null>(null);
   const [goalImagePreview, setGoalImagePreview] = useState("");
   const [goalUploading, setGoalUploading] = useState(false);
+  const [goalCropperOpen, setGoalCropperOpen] = useState(false);
+  const [goalCropperSrc, setGoalCropperSrc] = useState("");
   const goalFileRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
@@ -431,10 +434,13 @@ const Lancamentos = () => {
                       <input ref={goalFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          setGoalImageFile(file);
                           const reader = new FileReader();
-                          reader.onloadend = () => setGoalImagePreview(reader.result as string);
+                          reader.onloadend = () => {
+                            setGoalCropperSrc(reader.result as string);
+                            setGoalCropperOpen(true);
+                          };
                           reader.readAsDataURL(file);
+                          e.target.value = "";
                         }
                       }} />
                       <Button type="button" variant="outline" size="sm" onClick={() => goalFileRef.current?.click()} className="gap-2">
@@ -512,6 +518,18 @@ const Lancamentos = () => {
         open={!!deleteGoalId}
         onOpenChange={(o) => !o && setDeleteGoalId(null)}
         onConfirm={() => { if (deleteGoalId) { deleteSavingsGoal(deleteGoalId); setDeleteGoalId(null); } }}
+      />
+
+      <ImageCropper
+        open={goalCropperOpen}
+        onOpenChange={setGoalCropperOpen}
+        imageSrc={goalCropperSrc}
+        onCropComplete={(croppedFile) => {
+          setGoalImageFile(croppedFile);
+          const reader = new FileReader();
+          reader.onloadend = () => setGoalImagePreview(reader.result as string);
+          reader.readAsDataURL(croppedFile);
+        }}
       />
     </div>
   );

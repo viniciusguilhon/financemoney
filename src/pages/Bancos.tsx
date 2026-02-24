@@ -151,11 +151,11 @@ const Bancos = () => {
       </div>
 
       {/* Saldo Total */}
-      <div className="gradient-hero rounded-2xl p-6 text-primary-foreground relative overflow-hidden">
+      <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ background: "radial-gradient(circle at 80% 20%, white, transparent 50%)" }} />
-        <p className="text-sm opacity-80">Saldo Total</p>
-        <p className="text-3xl font-display font-bold mt-1">{fmt(totalSaldo)}</p>
-        <p className="text-xs opacity-60 mt-1">{banks.length} conta(s) cadastrada(s)</p>
+        <p className="text-sm opacity-80 relative z-[1]">Saldo Total</p>
+        <p className="text-3xl font-display font-bold mt-1 relative z-[1]">{fmt(totalSaldo)}</p>
+        <p className="text-xs opacity-60 mt-1 relative z-[1]">{banks.length} conta(s) cadastrada(s)</p>
       </div>
 
       {/* Bank Cards */}

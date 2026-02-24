@@ -98,9 +98,10 @@ const Investimentos = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="gradient-hero rounded-xl p-6 text-primary-foreground">
-          <p className="text-sm opacity-80">Total Investido</p>
-          <p className="text-3xl font-display font-bold mt-1">{fmt(totalInvestido)}</p>
+        <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-6 text-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10" style={{ background: "radial-gradient(circle at 80% 20%, white, transparent 50%)" }} />
+          <p className="text-sm opacity-80 relative z-[1]">Total Investido</p>
+          <p className="text-3xl font-display font-bold mt-1 relative z-[1]">{fmt(totalInvestido)}</p>
         </div>
         <div className="bg-card rounded-xl p-6 shadow-card">
           <p className="text-sm text-muted-foreground">Retorno Total</p>
