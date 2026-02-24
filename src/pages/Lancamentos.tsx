@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Search, ArrowUpRight, ArrowDownRight, Check, Clock, Pencil, Trash2, Receipt } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Search, ArrowUpRight, ArrowDownRight, Check, Clock, Pencil, Trash2, Receipt, Target, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -7,7 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useFinance, Transaction } from "@/contexts/FinanceContext";
+import { Progress } from "@/components/ui/progress";
+import { useFinance, Transaction, SavingsGoal } from "@/contexts/FinanceContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import MonthYearSelector from "@/components/MonthYearSelector";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
@@ -17,7 +20,9 @@ const Lancamentos = () => {
     categories, banks, currentMesAno,
     addCategory,
     getMonthBills, addBill, updateBill, deleteBill,
+    savingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
   } = useFinance();
+  const { user } = useAuth();
   const monthTx = getMonthTransactions();
   const monthBills = getMonthBills();
   const [search, setSearch] = useState("");
@@ -33,6 +38,16 @@ const Lancamentos = () => {
   const [editingBillId, setEditingBillId] = useState<string | null>(null);
   const [deleteBillId, setDeleteBillId] = useState<string | null>(null);
   const [billForm, setBillForm] = useState({ desc: "", valor: "", vencimento: "", tipo: "pagar" as "pagar" | "receber" });
+
+  // Savings goal state
+  const [goalOpen, setGoalOpen] = useState(false);
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+  const [deleteGoalId, setDeleteGoalId] = useState<string | null>(null);
+  const [goalForm, setGoalForm] = useState({ nome: "", descricao: "", valorAlvo: "", valorAtual: "" });
+  const [goalImageFile, setGoalImageFile] = useState<File | null>(null);
+  const [goalImagePreview, setGoalImagePreview] = useState("");
+  const [goalUploading, setGoalUploading] = useState(false);
+  const goalFileRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     data: "", categoria: "", descricao: "", valor: "", tipo: "saida" as "entrada" | "saida",
@@ -51,6 +66,13 @@ const Lancamentos = () => {
   };
 
   const resetBillForm = () => { setBillForm({ desc: "", valor: "", vencimento: "", tipo: "pagar" }); setEditingBillId(null); };
+
+  const resetGoalForm = () => {
+    setGoalForm({ nome: "", descricao: "", valorAlvo: "", valorAtual: "" });
+    setGoalImageFile(null);
+    setGoalImagePreview("");
+    setEditingGoalId(null);
+  };
 
   const openEdit = (tx: Transaction) => {
     setForm({
@@ -95,6 +117,46 @@ const Lancamentos = () => {
     resetBillForm();
   };
 
+  const handleGoalSubmit = async () => {
+    if (!goalForm.nome || !goalForm.valorAlvo) return;
+    setGoalUploading(true);
+    try {
+      let imageUrl: string | undefined;
+      if (goalImageFile && user) {
+        const ext = goalImageFile.name.split('.').pop();
+        const path = `${user.id}/goal-${Date.now()}.${ext}`;
+        const { error } = await supabase.storage.from("avatars").upload(path, goalImageFile, { upsert: true });
+        if (!error) {
+          const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+          imageUrl = urlData.publicUrl;
+        }
+      }
+      const goalData = {
+        nome: goalForm.nome,
+        descricao: goalForm.descricao,
+        valorAlvo: parseFloat(goalForm.valorAlvo),
+        valorAtual: parseFloat(goalForm.valorAtual || "0"),
+        imageUrl,
+      };
+      if (editingGoalId) {
+        updateSavingsGoal(editingGoalId, goalData);
+      } else {
+        addSavingsGoal(goalData);
+      }
+      setGoalOpen(false);
+      resetGoalForm();
+    } finally {
+      setGoalUploading(false);
+    }
+  };
+
+  const openEditGoal = (g: SavingsGoal) => {
+    setGoalForm({ nome: g.nome, descricao: g.descricao, valorAlvo: g.valorAlvo.toString(), valorAtual: g.valorAtual.toString() });
+    setGoalImagePreview(g.imageUrl || "");
+    setEditingGoalId(g.id);
+    setGoalOpen(true);
+  };
+
   const togglePago = (id: string) => {
     const tx = monthTx.find((t) => t.id === id);
     if (tx) updateTransaction(id, { pago: !tx.pago });
@@ -113,7 +175,7 @@ const Lancamentos = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Lançamentos</h1>
-          <p className="text-muted-foreground text-sm mt-1">Registre suas receitas, despesas e contas</p>
+          <p className="text-muted-foreground text-sm mt-1">Registre suas receitas, despesas, contas e metas</p>
         </div>
         <div className="flex items-center gap-2">
           <MonthYearSelector />
@@ -123,7 +185,8 @@ const Lancamentos = () => {
       <Tabs defaultValue="transacoes" className="w-full">
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="transacoes" className="gap-1.5"><ArrowUpRight className="w-3.5 h-3.5" /> Transações</TabsTrigger>
-          <TabsTrigger value="contas" className="gap-1.5"><Receipt className="w-3.5 h-3.5" /> Contas a Pagar/Receber</TabsTrigger>
+          <TabsTrigger value="contas" className="gap-1.5"><Receipt className="w-3.5 h-3.5" /> Contas</TabsTrigger>
+          <TabsTrigger value="metas" className="gap-1.5"><Target className="w-3.5 h-3.5" /> Metas</TabsTrigger>
         </TabsList>
 
         {/* Tab: Transações */}
@@ -288,7 +351,6 @@ const Lancamentos = () => {
             </Dialog>
           </div>
 
-          {/* Contas a Pagar */}
           <div className="bg-card rounded-xl p-5 shadow-card border border-border">
             <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
               <ArrowDownRight className="w-4 h-4 text-destructive" /> Contas a Pagar
@@ -317,7 +379,6 @@ const Lancamentos = () => {
             )}
           </div>
 
-          {/* Contas a Receber */}
           <div className="bg-card rounded-xl p-5 shadow-card border border-border">
             <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
               <ArrowUpRight className="w-4 h-4 text-success" /> Contas a Receber
@@ -346,6 +407,95 @@ const Lancamentos = () => {
             )}
           </div>
         </TabsContent>
+
+        {/* Tab: Metas de Economia */}
+        <TabsContent value="metas" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <Dialog open={goalOpen} onOpenChange={(o) => { setGoalOpen(o); if (!o) resetGoalForm(); }}>
+              <DialogTrigger asChild>
+                <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-2"><Plus className="w-4 h-4" /> Nova Meta</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader><DialogTitle className="font-display">{editingGoalId ? "Editar Meta" : "Nova Meta de Economia"}</DialogTitle></DialogHeader>
+                <div className="grid gap-4 py-2">
+                  <div><Label>O que deseja comprar?</Label><Input placeholder="Ex: iPhone 16" value={goalForm.nome} onChange={(e) => setGoalForm({ ...goalForm, nome: e.target.value })} /></div>
+                  <div><Label>Descrição</Label><Input placeholder="Descrição da meta" value={goalForm.descricao} onChange={(e) => setGoalForm({ ...goalForm, descricao: e.target.value })} /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Valor Total (R$)</Label><Input type="number" step="0.01" placeholder="0,00" value={goalForm.valorAlvo} onChange={(e) => setGoalForm({ ...goalForm, valorAlvo: e.target.value })} /></div>
+                    <div><Label>Já Economizado (R$)</Label><Input type="number" step="0.01" placeholder="0,00" value={goalForm.valorAtual} onChange={(e) => setGoalForm({ ...goalForm, valorAtual: e.target.value })} /></div>
+                  </div>
+                  <div>
+                    <Label>Imagem do Item</Label>
+                    <div className="flex items-center gap-3 mt-2">
+                      {goalImagePreview && <img src={goalImagePreview} alt="Preview" className="w-16 h-16 rounded-xl object-cover border border-border" />}
+                      <input ref={goalFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setGoalImageFile(file);
+                          const reader = new FileReader();
+                          reader.onloadend = () => setGoalImagePreview(reader.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }} />
+                      <Button type="button" variant="outline" size="sm" onClick={() => goalFileRef.current?.click()} className="gap-2">
+                        <Upload className="w-4 h-4" /> Upload
+                      </Button>
+                    </div>
+                  </div>
+                  <Button onClick={handleGoalSubmit} disabled={goalUploading} className="gradient-primary text-primary-foreground w-full">
+                    {goalUploading ? "Salvando..." : editingGoalId ? "Salvar Alterações" : "Criar Meta"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {savingsGoals.length === 0 ? (
+            <div className="bg-card rounded-xl p-12 shadow-card text-center">
+              <Target className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">Nenhuma meta cadastrada ainda.</p>
+              <p className="text-xs text-muted-foreground mt-1">Crie uma meta para acompanhar seu progresso!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {savingsGoals.map((goal) => {
+                const pct = goal.valorAlvo > 0 ? Math.min((goal.valorAtual / goal.valorAlvo) * 100, 100) : 0;
+                return (
+                  <div key={goal.id} className="bg-card rounded-xl p-5 shadow-card border border-border space-y-4">
+                    <div className="flex items-start gap-4">
+                      {goal.imageUrl ? (
+                        <img src={goal.imageUrl} alt={goal.nome} className="w-16 h-16 rounded-xl object-cover border border-border flex-shrink-0" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Target className="w-7 h-7 text-primary" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-foreground">{goal.nome}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{goal.descricao}</p>
+                      </div>
+                      <div className="flex gap-1">
+                        <button onClick={() => openEditGoal(goal)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => setDeleteGoalId(goal.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-2">
+                        <span className="text-muted-foreground">{fmt(goal.valorAtual)}</span>
+                        <span className="font-semibold text-foreground">{fmt(goal.valorAlvo)}</span>
+                      </div>
+                      <Progress value={pct} className="h-3" />
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-xs font-semibold text-primary">{pct.toFixed(0)}% concluído</span>
+                        <span className="text-xs text-muted-foreground">Falta: {fmt(Math.max(goal.valorAlvo - goal.valorAtual, 0))}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       <ConfirmDialog
@@ -357,6 +507,11 @@ const Lancamentos = () => {
         open={!!deleteBillId}
         onOpenChange={(o) => !o && setDeleteBillId(null)}
         onConfirm={() => { if (deleteBillId) { deleteBill(deleteBillId); setDeleteBillId(null); } }}
+      />
+      <ConfirmDialog
+        open={!!deleteGoalId}
+        onOpenChange={(o) => !o && setDeleteGoalId(null)}
+        onConfirm={() => { if (deleteGoalId) { deleteSavingsGoal(deleteGoalId); setDeleteGoalId(null); } }}
       />
     </div>
   );

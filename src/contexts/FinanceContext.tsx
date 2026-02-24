@@ -78,6 +78,15 @@ export interface Category {
   tipo: "entrada" | "saida" | "ambos";
 }
 
+export interface SavingsGoal {
+  id: string;
+  nome: string;
+  descricao: string;
+  valorAlvo: number;
+  valorAtual: number;
+  imageUrl?: string;
+}
+
 const defaultCategories: Category[] = [
   { id: "1", nome: "Mercado", tipo: "saida" },
   { id: "2", nome: "Farmácia", tipo: "saida" },
@@ -132,6 +141,10 @@ interface FinanceContextType {
   addCategory: (c: Omit<Category, "id">) => void;
   updateCategory: (id: string, c: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
+  savingsGoals: SavingsGoal[];
+  addSavingsGoal: (g: Omit<SavingsGoal, "id">) => void;
+  updateSavingsGoal: (id: string, g: Partial<SavingsGoal>) => void;
+  deleteSavingsGoal: (id: string) => void;
   loading: boolean;
 }
 
@@ -152,9 +165,9 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load all data from DB when user changes
   useEffect(() => {
     if (!user) {
       setTransactions([]);
@@ -163,6 +176,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       setBills([]);
       setInvestments([]);
       setCategories(defaultCategories);
+      setSavingsGoals([]);
       setLoading(false);
       return;
     }
@@ -172,13 +186,14 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const loadAll = async () => {
     if (!user) return;
     setLoading(true);
-    const [txRes, cardsRes, banksRes, billsRes, invRes, catRes] = await Promise.all([
+    const [txRes, cardsRes, banksRes, billsRes, invRes, catRes, goalsRes] = await Promise.all([
       supabase.from("transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("cards").select("*").eq("user_id", user.id),
       supabase.from("banks").select("*").eq("user_id", user.id),
       supabase.from("bills").select("*").eq("user_id", user.id),
       supabase.from("investments").select("*").eq("user_id", user.id),
       supabase.from("categories").select("*").eq("user_id", user.id),
+      supabase.from("savings_goals").select("*").eq("user_id", user.id),
     ]);
 
     if (txRes.data) setTransactions(txRes.data.map(mapTx));
@@ -186,10 +201,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     if (banksRes.data) setBanks(banksRes.data.map(mapBank));
     if (billsRes.data) setBills(billsRes.data.map(mapBill));
     if (invRes.data) setInvestments(invRes.data.map(mapInv));
+    if (goalsRes.data) setSavingsGoals(goalsRes.data.map(mapGoal));
     if (catRes.data && catRes.data.length > 0) {
       setCategories(catRes.data.map(mapCat));
     } else if (user) {
-      // Seed default categories for new user
       const inserts = defaultCategories.map((c) => ({ user_id: user.id, nome: c.nome, tipo: c.tipo }));
       const { data } = await supabase.from("categories").insert(inserts).select();
       if (data) setCategories(data.map(mapCat));
@@ -197,7 +212,6 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   };
 
-  // Mappers from DB row to local type
   const mapTx = (r: any): Transaction => ({
     id: r.id, data: r.data, categoria: r.categoria, descricao: r.descricao,
     valor: Number(r.valor), tipo: r.tipo as "entrada" | "saida", conta: r.conta,
@@ -221,6 +235,11 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const mapCat = (r: any): Category => ({
     id: r.id, nome: r.nome, tipo: r.tipo as "entrada" | "saida" | "ambos",
   });
+  const mapGoal = (r: any): SavingsGoal => ({
+    id: r.id, nome: r.nome, descricao: r.descricao,
+    valorAlvo: Number(r.valor_alvo), valorAtual: Number(r.valor_atual),
+    imageUrl: r.image_url,
+  });
 
   const getMonthTransactions = useCallback(
     () => transactions.filter((t) => t.mesAno === currentMesAno),
@@ -241,7 +260,6 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       parcelas: t.parcelas, parcela_atual: t.parcelaAtual, mes_ano: t.mesAno,
     }).select().single();
     if (data) setTransactions((prev) => [mapTx(data), ...prev]);
-    // Auto-adjust bank balance
     if (t.conta && t.conta !== "Geral") {
       const bank = banks.find((b) => b.nome === t.conta);
       if (bank) {
@@ -408,6 +426,31 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     setCategories((prev) => prev.filter((x) => x.id !== id));
   };
 
+  const addSavingsGoal = async (g: Omit<SavingsGoal, "id">) => {
+    if (!user) return;
+    const { data } = await supabase.from("savings_goals").insert({
+      user_id: user.id, nome: g.nome, descricao: g.descricao,
+      valor_alvo: g.valorAlvo, valor_atual: g.valorAtual, image_url: g.imageUrl,
+    }).select().single();
+    if (data) setSavingsGoals((prev) => [...prev, mapGoal(data)]);
+  };
+
+  const updateSavingsGoal = async (id: string, g: Partial<SavingsGoal>) => {
+    const updates: any = {};
+    if (g.nome !== undefined) updates.nome = g.nome;
+    if (g.descricao !== undefined) updates.descricao = g.descricao;
+    if (g.valorAlvo !== undefined) updates.valor_alvo = g.valorAlvo;
+    if (g.valorAtual !== undefined) updates.valor_atual = g.valorAtual;
+    if (g.imageUrl !== undefined) updates.image_url = g.imageUrl;
+    await supabase.from("savings_goals").update(updates).eq("id", id);
+    setSavingsGoals((prev) => prev.map((x) => (x.id === id ? { ...x, ...g } : x)));
+  };
+
+  const deleteSavingsGoal = async (id: string) => {
+    await supabase.from("savings_goals").delete().eq("id", id);
+    setSavingsGoals((prev) => prev.filter((x) => x.id !== id));
+  };
+
   const value: FinanceContextType = {
     currentMonth, currentYear, setCurrentMonth, setCurrentYear, currentMesAno,
     transactions, addTransaction, updateTransaction, deleteTransaction, getMonthTransactions,
@@ -416,6 +459,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     bills, addBill, updateBill, deleteBill, getMonthBills,
     investments, addInvestment, updateInvestment, deleteInvestment,
     categories, addCategory, updateCategory, deleteCategory,
+    savingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
     loading,
   };
 
