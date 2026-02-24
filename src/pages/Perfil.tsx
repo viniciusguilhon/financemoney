@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ImageCropper from "@/components/ImageCropper";
 import { toast } from "@/hooks/use-toast";
 
 const Perfil = () => {
@@ -21,6 +22,8 @@ const Perfil = () => {
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -41,16 +44,27 @@ const Perfil = () => {
     toast({ title: "Perfil atualizado!" });
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCropperSrc(reader.result as string);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be selected again
+    e.target.value = "";
+  };
+
+  const handleCroppedUpload = async (croppedFile: File) => {
+    if (!user) return;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const path = `${user.id}/avatar.${ext}`;
+      const path = `${user.id}/avatar.jpg`;
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { upsert: true });
+        .upload(path, croppedFile, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
       const newUrl = `${urlData.publicUrl}?t=${Date.now()}`;
@@ -108,7 +122,7 @@ const Perfil = () => {
             >
               <Camera className="w-5 h-5 text-white" />
             </button>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
           </div>
           <div>
             <p className="text-lg font-display font-bold text-foreground">{name || "Usuário"}</p>
@@ -188,6 +202,14 @@ const Perfil = () => {
         onConfirm={() => { setDeleteOpen(false); signOut(); }}
         title="Excluir conta?"
         description="Esta ação é irreversível. Todos os seus dados serão permanentemente removidos."
+      />
+
+      <ImageCropper
+        open={cropperOpen}
+        onOpenChange={setCropperOpen}
+        imageSrc={cropperSrc}
+        onCropComplete={handleCroppedUpload}
+        circular
       />
     </div>
   );

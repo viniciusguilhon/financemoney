@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -36,6 +36,7 @@ interface AppLayoutProps {
 
 const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { signOut } = useAuth();
@@ -44,7 +45,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-60 bg-sidebar fixed h-full z-30">
-        <div className="flex items-center px-5 py-5">
+        <div className="flex items-center px-5 py-5 cursor-pointer" onClick={() => navigate("/")}>
           <MoneyLogo />
         </div>
         <nav className="flex-1 px-3 py-2 space-y-0.5">
@@ -88,7 +89,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       {/* Mobile Header - Fixed: use bg-sidebar instead of gradient-dark */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 z-40">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
           <MoneyLogo size="sm" />
         </div>
         <div className="flex items-center gap-2">

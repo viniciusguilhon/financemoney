@@ -232,18 +232,18 @@ const Cartoes = () => {
 
       {/* Summary */}
       {cards.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-card rounded-xl p-4 shadow-card border border-border text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Limite Total</p>
-            <p className="text-lg font-display font-bold text-foreground">{fmt(totalLimite)}</p>
+        <div className="grid grid-cols-3 gap-2 md:gap-3">
+          <div className="bg-card rounded-xl p-3 md:p-4 shadow-card border border-border text-center overflow-hidden">
+            <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider">Limite Total</p>
+            <p className="text-sm md:text-lg font-display font-bold text-foreground truncate">{fmt(totalLimite)}</p>
           </div>
-          <div className="bg-card rounded-xl p-4 shadow-card border border-border text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Usado</p>
-            <p className="text-lg font-display font-bold text-warning">{fmt(totalUsado)}</p>
+          <div className="bg-card rounded-xl p-3 md:p-4 shadow-card border border-border text-center overflow-hidden">
+            <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider">Total Usado</p>
+            <p className="text-sm md:text-lg font-display font-bold text-warning truncate">{fmt(totalUsado)}</p>
           </div>
-          <div className="bg-card rounded-xl p-4 shadow-card border border-border text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Disponível</p>
-            <p className="text-lg font-display font-bold text-success">{fmt(totalLimite - totalUsado)}</p>
+          <div className="bg-card rounded-xl p-3 md:p-4 shadow-card border border-border text-center overflow-hidden">
+            <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider">Disponível</p>
+            <p className="text-sm md:text-lg font-display font-bold text-success truncate">{fmt(totalLimite - totalUsado)}</p>
           </div>
         </div>
       )}
