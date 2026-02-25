@@ -31,7 +31,7 @@ const Auth = () => {
   };
 
   const handleSignup = async () => {
-    if (!email || !password || !nome) return;
+    if (!email || !password) return;
     if (password !== confirmPassword) {
       toast({ title: "Senhas não coincidem", variant: "destructive" });
       return;
@@ -41,7 +41,7 @@ const Auth = () => {
       return;
     }
     setLoading(true);
-    const { error } = await signUp(email, password, nome);
+    const { error } = await signUp(email, password, "");
     if (error) {
       toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
     } else {
@@ -92,15 +92,7 @@ const Auth = () => {
             </button>
           )}
 
-          {mode === "signup" && (
-            <div>
-              <Label>Nome</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Seu nome" className="pl-10" value={nome} onChange={(e) => setNome(e.target.value)} />
-              </div>
-            </div>
-          )}
+
 
           <div>
             <Label>Email</Label>

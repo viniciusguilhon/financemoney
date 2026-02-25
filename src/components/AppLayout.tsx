@@ -2,13 +2,15 @@ import { ReactNode, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, Landmark, TrendingUp,
-  BarChart3, Menu, X, User, LogOut, Sun, Moon, PanelLeftClose, PanelLeft,
+  BarChart3, Menu, X, User, LogOut, Sun, Moon, PanelLeftClose, PanelLeft, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinance } from "@/contexts/FinanceContext";
 import MoneyLogo from "@/components/MoneyLogo";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import WelcomeDialog from "@/components/WelcomeDialog";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -30,8 +32,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { signOut } = useAuth();
+  const { refreshData } = useFinance();
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshData();
+    setTimeout(() => setRefreshing(false), 600);
+  };
 
   const sidebarWidth = sidebarCollapsed ? "w-16" : "w-60";
   const mainMargin = sidebarCollapsed ? "md:ml-16" : "md:ml-60";
@@ -103,6 +113,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           <MoneyLogo size="sm" />
         </div>
         <div className="flex items-center gap-1">
+          <button onClick={handleRefresh} className="text-sidebar-foreground p-2" title="Atualizar dados">
+            <RefreshCw className={cn("w-5 h-5", refreshing && "animate-spin")} />
+          </button>
           <button onClick={toggleTheme} className="text-sidebar-foreground p-2">
             {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </button>
@@ -183,7 +196,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         onConfirm={() => { setLogoutOpen(false); signOut(); }}
         title="Deseja sair?"
         description="Tem certeza que deseja sair da sua conta?"
+        confirmLabel="Sair"
       />
+
+      <WelcomeDialog />
     </div>
   );
 };

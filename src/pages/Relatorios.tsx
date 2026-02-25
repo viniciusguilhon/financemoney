@@ -81,7 +81,7 @@ const Relatorios = () => {
                   <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" />
                   <Tooltip formatter={(value: number) => [fmt(value), ""]} />
                   <Bar dataKey="receitas" fill="hsl(152, 60%, 42%)" radius={[4, 4, 0, 0]} name="Receitas" />
-                  <Bar dataKey="despesas" fill="hsl(215, 50%, 18%)" radius={[4, 4, 0, 0]} name="Despesas" />
+                  <Bar dataKey="despesas" fill="hsl(0, 72%, 55%)" radius={[4, 4, 0, 0]} name="Despesas" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

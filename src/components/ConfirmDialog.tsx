@@ -15,12 +15,14 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   title?: string;
   description?: string;
+  confirmLabel?: string;
 }
 
 const ConfirmDialog = ({
   open, onOpenChange, onConfirm,
   title = "Confirmar exclusão",
   description = "Tem certeza que deseja excluir? Esta ação não pode ser desfeita.",
+  confirmLabel = "Excluir",
 }: ConfirmDialogProps) => (
   <AlertDialog open={open} onOpenChange={onOpenChange}>
     <AlertDialogContent>
@@ -31,7 +33,7 @@ const ConfirmDialog = ({
       <AlertDialogFooter>
         <AlertDialogCancel>Cancelar</AlertDialogCancel>
         <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-          Excluir
+          {confirmLabel}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
