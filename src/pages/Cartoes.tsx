@@ -171,7 +171,7 @@ const Cartoes = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Cartões de Crédito</h1>
+          <h1 className="text-lg md:text-3xl font-display font-bold text-foreground">Cartões de Crédito</h1>
           <p className="text-muted-foreground text-sm mt-1">Gerencie seus cartões e faturas</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) resetForm(); }}>

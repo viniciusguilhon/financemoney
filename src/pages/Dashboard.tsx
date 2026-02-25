@@ -434,7 +434,7 @@ const HeroKpi = ({ label, value, icon, trend, detail, gradient }: {
           {icon}
         </div>
       </div>
-      <p className="text-sm md:text-2xl font-display font-bold text-white truncate">{value}</p>
+      <p className="text-lg md:text-2xl font-display font-bold text-white truncate">{value}</p>
       <p className="text-[9px] md:text-[10px] text-white/60 mt-1 flex items-center gap-1">
         {trend === "positive" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
         <span className="truncate">{detail}</span>

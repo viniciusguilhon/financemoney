@@ -185,9 +185,9 @@ const Lancamentos = () => {
 
       <Tabs defaultValue="transacoes" className="w-full">
         <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="transacoes" className="gap-1 text-xs"><ArrowUpRight className="w-3.5 h-3.5" /> Transações</TabsTrigger>
-          <TabsTrigger value="contas" className="gap-1 text-xs"><Receipt className="w-3.5 h-3.5" /> Contas</TabsTrigger>
-          <TabsTrigger value="metas" className="gap-1 text-xs"><Target className="w-3.5 h-3.5" /> Metas</TabsTrigger>
+          <TabsTrigger value="transacoes" className="gap-1.5 text-sm py-2.5 px-4"><ArrowUpRight className="w-4 h-4" /> Transações</TabsTrigger>
+          <TabsTrigger value="contas" className="gap-1.5 text-sm py-2.5 px-4"><Receipt className="w-4 h-4" /> Contas</TabsTrigger>
+          <TabsTrigger value="metas" className="gap-1.5 text-sm py-2.5 px-4"><Target className="w-4 h-4" /> Metas</TabsTrigger>
         </TabsList>
 
         {/* Tab: Transações */}
@@ -296,8 +296,8 @@ const Lancamentos = () => {
                         {tx.tipo === "entrada" ? <ArrowUpRight className="w-4 h-4 text-success" /> : <ArrowDownRight className="w-4 h-4 text-destructive" />}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs md:text-sm font-medium text-foreground truncate">{tx.descricao}</p>
-                        <p className="text-[10px] md:text-xs text-muted-foreground truncate">
+                        <p className="text-sm font-medium text-foreground truncate">{tx.descricao}</p>
+                        <p className="text-[11px] md:text-xs text-muted-foreground truncate">
                           {tx.categoria} • {tx.conta} • {new Date(tx.data + "T12:00:00").toLocaleDateString("pt-BR")}
                           {tx.parcelas && tx.parcelas > 1 && ` • ${tx.parcelaAtual}/${tx.parcelas}x`}
                         </p>
