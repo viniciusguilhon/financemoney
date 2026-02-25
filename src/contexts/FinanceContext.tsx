@@ -146,6 +146,7 @@ interface FinanceContextType {
   updateSavingsGoal: (id: string, g: Partial<SavingsGoal>) => void;
   deleteSavingsGoal: (id: string) => void;
   loading: boolean;
+  refreshData: () => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextType>(null!);
@@ -451,6 +452,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     setSavingsGoals((prev) => prev.filter((x) => x.id !== id));
   };
 
+  const refreshData = useCallback(async () => {
+    if (user) await loadAll();
+  }, [user]);
+
   const value: FinanceContextType = {
     currentMonth, currentYear, setCurrentMonth, setCurrentYear, currentMesAno,
     transactions, addTransaction, updateTransaction, deleteTransaction, getMonthTransactions,
@@ -460,7 +465,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     investments, addInvestment, updateInvestment, deleteInvestment,
     categories, addCategory, updateCategory, deleteCategory,
     savingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
-    loading,
+    loading, refreshData,
   };
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;

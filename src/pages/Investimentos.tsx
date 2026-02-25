@@ -31,7 +31,7 @@ const Investimentos = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterCat, setFilterCat] = useState("Todos");
-  const [form, setForm] = useState({ nome: "", categoria: "Renda Fixa", investido: "", retorno: "", data: "", cor: invColors[0] });
+  const [form, setForm] = useState({ nome: "", categoria: "Renda Fixa", investido: "", retorno: "", data: "", cor: invColors[0], outroNome: "" });
 
   const totalInvestido = investments.reduce((acc, i) => acc + i.investido, 0);
   const totalRetorno = investments.reduce((acc, i) => acc + i.retorno, 0);
@@ -40,18 +40,20 @@ const Investimentos = () => {
 
   const filtered = filterCat === "Todos" ? investments : investments.filter((i) => i.categoria === filterCat);
 
-  const resetForm = () => { setForm({ nome: "", categoria: "Renda Fixa", investido: "", retorno: "", data: "", cor: invColors[0] }); setEditingId(null); };
+  const resetForm = () => { setForm({ nome: "", categoria: "Renda Fixa", investido: "", retorno: "", data: "", cor: invColors[0], outroNome: "" }); setEditingId(null); };
 
   const openEdit = (inv: Investment) => {
-    setForm({ nome: inv.nome, categoria: inv.categoria, investido: inv.investido.toString(), retorno: inv.retorno.toString(), data: inv.data, cor: inv.cor });
+    setForm({ nome: inv.nome, categoria: inv.categoria, investido: inv.investido.toString(), retorno: inv.retorno.toString(), data: inv.data, cor: inv.cor, outroNome: "" });
     setEditingId(inv.id);
     setOpen(true);
   };
 
   const handleSubmit = () => {
     if (!form.nome || !form.investido) return;
+    if (form.categoria === "Outros" && !form.outroNome.trim()) return;
+    const finalCategoria = form.categoria === "Outros" ? `Outros: ${form.outroNome.trim()}` : form.categoria;
     const data = {
-      nome: form.nome, categoria: form.categoria,
+      nome: form.nome, categoria: finalCategoria,
       investido: parseFloat(form.investido), retorno: parseFloat(form.retorno) || 0,
       data: form.data, cor: form.cor,
     };
@@ -110,13 +112,19 @@ const Investimentos = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Categoria</Label>
-                  <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v })}>
+                  <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v, outroNome: "" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{invCategories.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div><Label>Data</Label><Input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} /></div>
               </div>
+              {form.categoria === "Outros" && (
+                <div>
+                  <Label>Qual tipo de investimento?</Label>
+                  <Input value={form.outroNome} onChange={(e) => setForm({ ...form, outroNome: e.target.value })} placeholder="Ex: Ações internacionais, Forex..." />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Valor Investido (R$)</Label><Input type="number" step="0.01" value={form.investido} onChange={(e) => setForm({ ...form, investido: e.target.value })} /></div>
                 <div><Label>Retorno (R$)</Label><Input type="number" step="0.01" value={form.retorno} onChange={(e) => setForm({ ...form, retorno: e.target.value })} /></div>
