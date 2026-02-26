@@ -1,8 +1,8 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, Landmark, TrendingUp,
-  BarChart3, Menu, X, User, LogOut, Sun, Moon, PanelLeftClose, PanelLeft, RefreshCw,
+  BarChart3, Menu, X, User, LogOut, Sun, Moon, RefreshCw, MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -11,6 +11,8 @@ import { useFinance } from "@/contexts/FinanceContext";
 import MoneyLogo from "@/components/MoneyLogo";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import WelcomeDialog from "@/components/WelcomeDialog";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -21,6 +23,13 @@ const navItems = [
   { path: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { path: "/perfil", label: "Perfil", icon: User },
 ];
+
+interface WhatsAppConfig {
+  enabled: boolean;
+  url: string;
+  label: string;
+  color: string;
+}
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -36,6 +45,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { theme, toggleTheme } = useTheme();
   const { signOut } = useAuth();
   const { refreshData } = useFinance();
+  const [whatsapp, setWhatsapp] = useState<WhatsAppConfig | null>(null);
+
+  useEffect(() => {
+    fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=whatsapp_support`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setWhatsapp(data); })
+      .catch(() => {});
+  }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -55,13 +72,13 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           {sidebarCollapsed && <div className="w-full flex justify-center"><MoneyLogo size="sm" /></div>}
         </div>
 
-        {/* Collapse toggle */}
+        {/* Hamburger toggle */}
         <button
           onClick={(e) => { e.stopPropagation(); setSidebarCollapsed(!sidebarCollapsed); }}
           className="hidden md:flex items-center justify-center mx-auto mb-2 w-8 h-8 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
           title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
         >
-          {sidebarCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+          <Menu className="w-4 h-4" />
         </button>
 
         <nav className="flex-1 px-2 py-2 space-y-0.5">
@@ -87,6 +104,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           })}
         </nav>
         <div className="px-2 py-4 space-y-0.5">
+          {/* Refresh button - Desktop */}
+          <button
+            onClick={handleRefresh}
+            title={sidebarCollapsed ? "Atualizar dados" : undefined}
+            className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full transition-colors", sidebarCollapsed && "justify-center px-0")}
+          >
+            <RefreshCw className={cn("w-[18px] h-[18px]", refreshing && "animate-spin")} />
+            {!sidebarCollapsed && "Atualizar"}
+          </button>
           <button
             onClick={toggleTheme}
             title={sidebarCollapsed ? (theme === "light" ? "Modo Escuro" : "Modo Claro") : undefined}
@@ -103,6 +129,25 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             <LogOut className="w-[18px] h-[18px]" />
             {!sidebarCollapsed && "Sair"}
           </button>
+
+          {/* WhatsApp Support Button */}
+          {whatsapp?.enabled && whatsapp.url && (
+            <a
+              href={whatsapp.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={sidebarCollapsed ? whatsapp.label : undefined}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium w-full transition-colors text-white",
+                sidebarCollapsed && "justify-center px-0"
+              )}
+              style={{ backgroundColor: whatsapp.color }}
+            >
+              <MessageCircle className="w-[18px] h-[18px] flex-shrink-0" />
+              {!sidebarCollapsed && whatsapp.label}
+            </a>
+          )}
+
           {!sidebarCollapsed && <p className="text-[10px] text-sidebar-foreground/30 text-center mt-3">Money © 2026</p>}
         </div>
       </aside>
@@ -158,6 +203,20 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               <LogOut className="w-5 h-5" />
               Sair
             </button>
+            {/* WhatsApp in mobile menu */}
+            {whatsapp?.enabled && whatsapp.url && (
+              <a
+                href={whatsapp.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium w-full text-white"
+                style={{ backgroundColor: whatsapp.color }}
+                onClick={() => setMobileOpen(false)}
+              >
+                <MessageCircle className="w-5 h-5" />
+                {whatsapp.label}
+              </a>
+            )}
           </div>
         </div>
       )}
