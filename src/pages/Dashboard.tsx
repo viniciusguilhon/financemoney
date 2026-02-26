@@ -434,7 +434,7 @@ const HeroKpi = ({ label, value, icon, trend, detail, gradient }: {
           {icon}
         </div>
       </div>
-      <p className="text-lg md:text-2xl font-display font-bold text-white truncate">{value}</p>
+      <p className="text-xl md:text-2xl font-display font-bold text-white truncate">{value}</p>
       <p className="text-[9px] md:text-[10px] text-white/60 mt-1 flex items-center gap-1">
         {trend === "positive" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
         <span className="truncate">{detail}</span>
@@ -451,7 +451,7 @@ const InfoCard = ({ icon, label, value, accent, extra }: {
       {icon}
       <p className="text-[9px] md:text-[10px] text-muted-foreground truncate">{label}</p>
     </div>
-    <p className={`text-[11px] md:text-sm font-bold text-${accent} truncate`}>{value}</p>
+    <p className={`text-sm md:text-base font-bold text-${accent} truncate`}>{value}</p>
     {extra && <p className="text-[8px] md:text-[9px] text-muted-foreground mt-0.5 truncate">{extra}</p>}
   </div>
 );

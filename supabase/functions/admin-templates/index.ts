@@ -11,6 +11,42 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const url = new URL(req.url);
+  const type = url.searchParams.get("type"); // "bank", "card", or "settings"
+
+  // Public read for settings (no admin password required)
+  if (req.method === "GET" && type === "settings") {
+    const key = url.searchParams.get("key");
+    if (key) {
+      const { data, error } = await supabase.from("app_settings").select("value").eq("key", key).single();
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify(data.value), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data, error } = await supabase.from("app_settings").select("*");
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Admin password required for everything else
   const adminPassword = Deno.env.get("ADMIN_PASSWORD");
   const providedPassword = req.headers.get("x-admin-password");
 
@@ -20,14 +56,6 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-
-  const url = new URL(req.url);
-  const type = url.searchParams.get("type"); // "bank" or "card"
 
   try {
     if (req.method === "GET") {
@@ -43,8 +71,24 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { action } = body;
 
+      // Handle settings updates
+      if (type === "settings") {
+        if (action === "update") {
+          const { key, value } = body;
+          const { data, error } = await supabase
+            .from("app_settings")
+            .update({ value, updated_at: new Date().toISOString() })
+            .eq("key", key)
+            .select()
+            .single();
+          if (error) throw error;
+          return new Response(JSON.stringify(data), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       if (action === "upload-image") {
-        // Upload image to storage
         const { fileName, fileBase64, contentType } = body;
         const fileBytes = Uint8Array.from(atob(fileBase64), (c) => c.charCodeAt(0));
         const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');

@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { Eye, EyeOff, Plus, Trash2, Upload, Lock, CreditCard, Building2 } from "lucide-react";
+import { Eye, EyeOff, Plus, Trash2, Upload, Lock, CreditCard, Building2, MessageCircle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -21,6 +22,13 @@ interface CardTemplate {
   nome: string;
   image_url: string | null;
   bandeira: string;
+}
+
+interface WhatsAppConfig {
+  enabled: boolean;
+  url: string;
+  label: string;
+  color: string;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -48,6 +56,12 @@ const Admin = () => {
   const [cardImagePreview, setCardImagePreview] = useState("");
   const cardFileRef = useRef<HTMLInputElement>(null);
 
+  // WhatsApp config
+  const [whatsappConfig, setWhatsappConfig] = useState<WhatsAppConfig>({
+    enabled: false, url: "", label: "Suporte", color: "hsl(142, 70%, 45%)",
+  });
+  const [savingWhatsapp, setSavingWhatsapp] = useState(false);
+
   const bandeiras = ["Mastercard", "Visa", "Elo", "Amex", "Hipercard"];
 
   const adminFetch = async (method: string, type: string, body?: any) => {
@@ -69,7 +83,6 @@ const Admin = () => {
   const handleLogin = async () => {
     try {
       setLoading(true);
-      // Test password by fetching templates
       const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=bank`, {
         headers: { "x-admin-password": password },
       });
@@ -78,11 +91,16 @@ const Admin = () => {
         setAuthenticated(true);
         const data = await res.json();
         setBankTemplates(data);
-        // Also fetch card templates
         const cardRes = await fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=card`, {
           headers: { "x-admin-password": password },
         });
         if (cardRes.ok) setCardTemplates(await cardRes.json());
+        // Load WhatsApp config
+        const settingsRes = await fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=whatsapp_support`);
+        if (settingsRes.ok) {
+          const cfg = await settingsRes.json();
+          setWhatsappConfig(cfg);
+        }
       } else {
         toast({ title: "Senha incorreta", variant: "destructive" });
       }
@@ -172,6 +190,22 @@ const Admin = () => {
     }
   };
 
+  const handleSaveWhatsapp = async () => {
+    try {
+      setSavingWhatsapp(true);
+      await adminFetch("POST", "settings", {
+        action: "update",
+        key: "whatsapp_support",
+        value: whatsappConfig,
+      });
+      toast({ title: "Configuração salva!" });
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" });
+    } finally {
+      setSavingWhatsapp(false);
+    }
+  };
+
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     setFile: (f: File | null) => void,
@@ -228,7 +262,7 @@ const Admin = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Painel Administrador</h1>
-            <p className="text-sm text-muted-foreground">Gerencie templates de bancos e cartões</p>
+            <p className="text-sm text-muted-foreground">Gerencie templates e configurações</p>
           </div>
           <Button variant="outline" onClick={() => { setAuthenticated(false); setAdminPassword(""); setPassword(""); }}>
             Sair
@@ -236,9 +270,10 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="banks" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="banks" className="gap-2"><Building2 className="w-4 h-4" /> Bancos</TabsTrigger>
             <TabsTrigger value="cards" className="gap-2"><CreditCard className="w-4 h-4" /> Cartões</TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2"><Settings className="w-4 h-4" /> Config</TabsTrigger>
           </TabsList>
 
           <TabsContent value="banks" className="space-y-4 mt-4">
@@ -346,6 +381,66 @@ const Admin = () => {
                 </div>
               ))}
               {cardTemplates.length === 0 && <p className="text-muted-foreground col-span-full text-center py-8">Nenhum cartão cadastrado ainda.</p>}
+            </div>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6 mt-4">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: whatsappConfig.color }}>
+                  <MessageCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-display font-semibold text-foreground">Botão de Suporte WhatsApp</h3>
+                  <p className="text-xs text-muted-foreground">Configure o botão de suporte que aparece no menu lateral</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label>Ativar botão</Label>
+                <Switch
+                  checked={whatsappConfig.enabled}
+                  onCheckedChange={(checked) => setWhatsappConfig({ ...whatsappConfig, enabled: checked })}
+                />
+              </div>
+
+              <div>
+                <Label>URL do WhatsApp</Label>
+                <Input
+                  value={whatsappConfig.url}
+                  onChange={(e) => setWhatsappConfig({ ...whatsappConfig, url: e.target.value })}
+                  placeholder="https://wa.me/5511999999999"
+                  className="mt-1"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Use o formato: https://wa.me/NUMERO</p>
+              </div>
+
+              <div>
+                <Label>Nome do botão</Label>
+                <Input
+                  value={whatsappConfig.label}
+                  onChange={(e) => setWhatsappConfig({ ...whatsappConfig, label: e.target.value })}
+                  placeholder="Suporte"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label>Cor do botão (HSL)</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  <Input
+                    value={whatsappConfig.color}
+                    onChange={(e) => setWhatsappConfig({ ...whatsappConfig, color: e.target.value })}
+                    placeholder="hsl(142, 70%, 45%)"
+                  />
+                  <div className="w-10 h-10 rounded-lg flex-shrink-0 border border-border" style={{ backgroundColor: whatsappConfig.color }} />
+                </div>
+              </div>
+
+              <Button onClick={handleSaveWhatsapp} disabled={savingWhatsapp} className="w-full gradient-primary text-primary-foreground">
+                {savingWhatsapp ? "Salvando..." : "Salvar Configuração"}
+              </Button>
             </div>
           </TabsContent>
         </Tabs>
