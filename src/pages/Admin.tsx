@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Eye, EyeOff, Plus, Trash2, Upload, Lock, CreditCard, Building2, MessageCircle, Settings } from "lucide-react";
+import { Eye, EyeOff, Plus, Trash2, Upload, Lock, CreditCard, Building2, MessageCircle, Settings, Users, User, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,15 @@ interface WhatsAppConfig {
   url: string;
   label: string;
   color: string;
+}
+
+interface UserProfile {
+  id: string;
+  nome: string;
+  email: string;
+  whatsapp: string;
+  avatar_url: string | null;
+  created_at: string;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -61,6 +70,7 @@ const Admin = () => {
     enabled: false, url: "", label: "Suporte", color: "hsl(142, 70%, 45%)",
   });
   const [savingWhatsapp, setSavingWhatsapp] = useState(false);
+  const [users, setUsers] = useState<UserProfile[]>([]);
 
   const bandeiras = ["Mastercard", "Visa", "Elo", "Amex", "Hipercard"];
 
@@ -101,6 +111,11 @@ const Admin = () => {
           const cfg = await settingsRes.json();
           setWhatsappConfig(cfg);
         }
+        // Load users
+        const usersRes = await fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=users`, {
+          headers: { "x-admin-password": password },
+        });
+        if (usersRes.ok) setUsers(await usersRes.json());
       } else {
         toast({ title: "Senha incorreta", variant: "destructive" });
       }
@@ -270,9 +285,10 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="banks" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="banks" className="gap-2"><Building2 className="w-4 h-4" /> Bancos</TabsTrigger>
             <TabsTrigger value="cards" className="gap-2"><CreditCard className="w-4 h-4" /> Cartões</TabsTrigger>
+            <TabsTrigger value="users" className="gap-2"><Users className="w-4 h-4" /> Usuários</TabsTrigger>
             <TabsTrigger value="settings" className="gap-2"><Settings className="w-4 h-4" /> Config</TabsTrigger>
           </TabsList>
 
@@ -392,7 +408,7 @@ const Admin = () => {
                   <MessageCircle className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-display font-semibold text-foreground">Botão de Suporte WhatsApp</h3>
+              <h3 className="font-display font-semibold text-foreground">Botão de Suporte WhatsApp</h3>
                   <p className="text-xs text-muted-foreground">Configure o botão de suporte que aparece no menu lateral</p>
                 </div>
               </div>
@@ -441,6 +457,45 @@ const Admin = () => {
               <Button onClick={handleSaveWhatsapp} disabled={savingWhatsapp} className="w-full gradient-primary text-primary-foreground">
                 {savingWhatsapp ? "Salvando..." : "Salvar Configuração"}
               </Button>
+            </div>
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-4 mt-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">{users.length} usuário(s) cadastrado(s)</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {users.map((u) => (
+                <div key={u.id} className="bg-card rounded-2xl p-4 border border-border shadow-card space-y-3">
+                  <div className="flex items-center gap-3">
+                    {u.avatar_url ? (
+                      <img src={u.avatar_url} alt={u.nome} className="w-12 h-12 rounded-full object-cover border-2 border-border" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="w-6 h-6 text-primary" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground truncate">{u.nome || "Sem nome"}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{u.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>{u.whatsapp || "Não informado"}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {users.length === 0 && <p className="text-muted-foreground col-span-full text-center py-8">Nenhum usuário cadastrado ainda.</p>}
             </div>
           </TabsContent>
         </Tabs>

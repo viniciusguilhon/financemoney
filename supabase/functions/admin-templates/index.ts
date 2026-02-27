@@ -59,6 +59,15 @@ Deno.serve(async (req) => {
 
   try {
     if (req.method === "GET") {
+      // Users listing for admin
+      if (type === "users") {
+        const { data, error } = await supabase.from("profiles").select("id, nome, email, whatsapp, avatar_url, created_at").order("created_at", { ascending: false });
+        if (error) throw error;
+        return new Response(JSON.stringify(data), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const table = type === "card" ? "card_templates" : "bank_templates";
       const { data, error } = await supabase.from(table).select("*").order("nome");
       if (error) throw error;
