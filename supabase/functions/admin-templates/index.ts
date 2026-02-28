@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
   );
 
   const url = new URL(req.url);
-  const type = url.searchParams.get("type"); // "bank", "card", or "settings"
+  const type = url.searchParams.get("type");
 
   // Public read for settings (no admin password required)
   if (req.method === "GET" && type === "settings") {
@@ -59,11 +59,53 @@ Deno.serve(async (req) => {
 
   try {
     if (req.method === "GET") {
-      // Users listing for admin
+      // Users listing with last_sign_in from auth
       if (type === "users") {
-        const { data, error } = await supabase.from("profiles").select("id, nome, email, whatsapp, avatar_url, created_at").order("created_at", { ascending: false });
+        const { data: profiles, error } = await supabase.from("profiles").select("id, nome, email, whatsapp, avatar_url, created_at").order("created_at", { ascending: false });
         if (error) throw error;
-        return new Response(JSON.stringify(data), {
+
+        // Get auth users for last_sign_in and banned status
+        const { data: authData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+        const authMap = new Map<string, { last_sign_in_at: string | null; banned: boolean }>();
+        if (authData?.users) {
+          for (const u of authData.users) {
+            authMap.set(u.id, {
+              last_sign_in_at: u.last_sign_in_at || null,
+              banned: u.banned_until ? new Date(u.banned_until) > new Date() : false,
+            });
+          }
+        }
+
+        const enriched = (profiles || []).map((p) => ({
+          ...p,
+          last_sign_in_at: authMap.get(p.id)?.last_sign_in_at || null,
+          banned: authMap.get(p.id)?.banned || false,
+        }));
+
+        return new Response(JSON.stringify(enriched), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Dashboard stats
+      if (type === "dashboard") {
+        const { data: profiles } = await supabase.from("profiles").select("id, created_at");
+        const { data: authData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+        
+        const totalUsers = profiles?.length || 0;
+        const now = new Date();
+        const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const newThisMonth = profiles?.filter(p => p.created_at.startsWith(thisMonth)).length || 0;
+        
+        const activeToday = authData?.users?.filter(u => {
+          if (!u.last_sign_in_at) return false;
+          const d = new Date(u.last_sign_in_at);
+          return d.toDateString() === now.toDateString();
+        }).length || 0;
+
+        const bannedCount = authData?.users?.filter(u => u.banned_until && new Date(u.banned_until) > now).length || 0;
+
+        return new Response(JSON.stringify({ totalUsers, newThisMonth, activeToday, bannedCount }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -79,6 +121,47 @@ Deno.serve(async (req) => {
     if (req.method === "POST") {
       const body = await req.json();
       const { action } = body;
+
+      // User management
+      if (type === "users") {
+        if (action === "update") {
+          const { id, nome, whatsapp } = body;
+          const { error } = await supabase.from("profiles").update({ nome, whatsapp }).eq("id", id);
+          if (error) throw error;
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (action === "delete") {
+          const { id } = body;
+          const { error } = await supabase.auth.admin.deleteUser(id);
+          if (error) throw error;
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (action === "ban") {
+          const { id, ban } = body;
+          const { error } = await supabase.auth.admin.updateUserById(id, {
+            ban_duration: ban ? "876000h" : "none",
+          });
+          if (error) throw error;
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (action === "reset-password") {
+          const { email } = body;
+          const { error } = await supabase.auth.admin.generateLink({
+            type: "recovery",
+            email,
+          });
+          if (error) throw error;
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
 
       // Handle settings updates
       if (type === "settings") {

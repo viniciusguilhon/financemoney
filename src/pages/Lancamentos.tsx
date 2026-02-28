@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Plus, Search, ArrowUpRight, ArrowDownRight, Check, Clock, Pencil, Trash2, Receipt, Target, Upload } from "lucide-react";
+import { Plus, Search, ArrowUpRight, ArrowDownRight, Check, Clock, Pencil, Trash2, Receipt, Target, Upload, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -27,6 +27,10 @@ const Lancamentos = () => {
   const monthTx = getMonthTransactions();
   const monthBills = getMonthBills();
   const [search, setSearch] = useState("");
+  const [filterTipo, setFilterTipo] = useState<string>("todos");
+  const [filterCategoria, setFilterCategoria] = useState<string>("todas");
+  const [filterConta, setFilterConta] = useState<string>("todas");
+  const [filterStatus, setFilterStatus] = useState<string>("todos");
   const [open, setOpen] = useState(false);
   const [parcelado, setParcelado] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -57,10 +61,14 @@ const Lancamentos = () => {
     conta: "", parcelas: "1",
   });
 
-  const filtered = monthTx.filter((t) =>
-    t.descricao.toLowerCase().includes(search.toLowerCase()) ||
-    t.categoria.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = monthTx.filter((t) => {
+    const matchSearch = t.descricao.toLowerCase().includes(search.toLowerCase()) || t.categoria.toLowerCase().includes(search.toLowerCase());
+    const matchTipo = filterTipo === "todos" || t.tipo === filterTipo;
+    const matchCategoria = filterCategoria === "todas" || t.categoria === filterCategoria;
+    const matchConta = filterConta === "todas" || t.conta === filterConta;
+    const matchStatus = filterStatus === "todos" || (filterStatus === "pago" ? t.pago : !t.pago);
+    return matchSearch && matchTipo && matchCategoria && matchConta && matchStatus;
+  });
 
   const resetForm = () => {
     setForm({ data: "", categoria: "", descricao: "", valor: "", tipo: "saida", conta: "", parcelas: "1" });
@@ -192,11 +200,12 @@ const Lancamentos = () => {
 
         {/* Tab: Transações */}
         <TabsContent value="transacoes" className="space-y-4 mt-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Buscar transações..." className="pl-10 h-9 text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
-            </div>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Buscar transações..." className="pl-10 h-9 text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
             <div className="flex items-center gap-2">
               <Dialog open={catOpen} onOpenChange={setCatOpen}>
                 <DialogTrigger asChild>
@@ -281,6 +290,44 @@ const Lancamentos = () => {
                   </div>
                 </DialogContent>
               </Dialog>
+            </div>
+            </div>
+            {/* Filters */}
+            <div className="flex flex-wrap gap-2">
+              <Select value={filterTipo} onValueChange={setFilterTipo}>
+                <SelectTrigger className="w-[130px] h-8 text-xs"><Filter className="w-3 h-3 mr-1" /><SelectValue placeholder="Tipo" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os tipos</SelectItem>
+                  <SelectItem value="entrada">Entradas</SelectItem>
+                  <SelectItem value="saida">Saídas</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterCategoria} onValueChange={setFilterCategoria}>
+                <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Categoria" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas categorias</SelectItem>
+                  {[...new Set(monthTx.map(t => t.categoria))].map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterConta} onValueChange={setFilterConta}>
+                <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Conta" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas contas</SelectItem>
+                  {[...new Set(monthTx.map(t => t.conta))].map(conta => (
+                    <SelectItem key={conta} value={conta}>{conta}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos status</SelectItem>
+                  <SelectItem value="pago">Pagos</SelectItem>
+                  <SelectItem value="pendente">Pendentes</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
