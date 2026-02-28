@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Lock, Palette, Trash2, Camera, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Palette, Trash2, Camera, Eye, EyeOff, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,17 +7,18 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
-import ConfirmDialog from "@/components/ConfirmDialog";
+
 import ImageCropper from "@/components/ImageCropper";
 import { toast } from "@/hooks/use-toast";
 
 const Perfil = () => {
   const { theme, toggleTheme } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -29,9 +30,10 @@ const Perfil = () => {
   useEffect(() => {
     if (user) {
       setEmail(user.email || "");
-      supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single().then(({ data }) => {
+      supabase.from("profiles").select("nome, avatar_url, whatsapp").eq("id", user.id).single().then(({ data }) => {
         if (data) {
           setName(data.nome || "");
+          setWhatsapp(data.whatsapp || "");
           setAvatarUrl(data.avatar_url || null);
         }
       });
@@ -40,7 +42,7 @@ const Perfil = () => {
 
   const handleSaveProfile = async () => {
     if (!user) return;
-    await supabase.from("profiles").update({ nome: name }).eq("id", user.id);
+    await supabase.from("profiles").update({ nome: name, whatsapp }).eq("id", user.id);
     toast({ title: "Perfil atualizado!" });
   };
 
@@ -169,6 +171,13 @@ const Perfil = () => {
             <Label>Email</Label>
             <Input type="email" value={email} disabled className="opacity-60" />
           </div>
+          <div>
+            <Label>WhatsApp</Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input type="tel" placeholder="(00) 00000-0000" className="pl-10" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+            </div>
+          </div>
           <Button onClick={handleSaveProfile} className="gradient-primary text-primary-foreground w-fit" size="sm">Salvar Alterações</Button>
         </div>
       </div>
@@ -210,22 +219,6 @@ const Perfil = () => {
         </div>
       </div>
 
-      {/* Danger Zone */}
-      <div className="bg-card rounded-xl p-4 md:p-6 shadow-card border border-destructive/20 space-y-4">
-        <h3 className="font-display font-semibold text-destructive text-sm flex items-center gap-2">
-          <Trash2 className="w-4 h-4" /> Zona de Perigo
-        </h3>
-        <p className="text-xs md:text-sm text-muted-foreground">Uma vez excluída, sua conta não poderá ser recuperada.</p>
-        <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>Excluir Minha Conta</Button>
-      </div>
-
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onConfirm={() => { setDeleteOpen(false); signOut(); }}
-        title="Excluir conta?"
-        description="Esta ação é irreversível. Todos os seus dados serão permanentemente removidos."
-      />
 
       <ImageCropper
         open={cropperOpen}

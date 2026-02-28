@@ -51,7 +51,7 @@ const Relatorios = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="gradient-hero rounded-xl p-5 text-primary-foreground">
+        <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-5 text-white">
           <p className="text-sm opacity-80">Receitas Anuais</p>
           <p className="text-2xl font-display font-bold mt-1">{fmt(totalReceitas)}</p>
         </div>
