@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import MoneyLogo from "@/components/MoneyLogo";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 type AuthMode = "login" | "signup" | "forgot";
 
@@ -20,6 +22,14 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [signupDisabled, setSignupDisabled] = useState(false);
+
+  useEffect(() => {
+    fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=signup_disabled`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data && data.disabled) setSignupDisabled(true); })
+      .catch(() => {});
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) return;
@@ -189,7 +199,7 @@ const Auth = () => {
 
         <p className="text-center text-sm text-muted-foreground">
           {mode === "login" ? (
-            <>Não tem conta? <button onClick={() => { setMode("signup"); reset(); }} className="text-primary font-medium hover:underline">Cadastre-se</button></>
+            !signupDisabled && <>Não tem conta? <button onClick={() => { setMode("signup"); reset(); }} className="text-primary font-medium hover:underline">Cadastre-se</button></>
           ) : mode === "signup" ? (
             <>Já tem conta? <button onClick={() => { setMode("login"); reset(); }} className="text-primary font-medium hover:underline">Entrar</button></>
           ) : null}
