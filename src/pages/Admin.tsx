@@ -3,6 +3,7 @@ import {
   Eye, EyeOff, Plus, Trash2, Upload, Lock, CreditCard, Building2, MessageCircle,
   Settings, Users, User, Phone, Mail, LayoutDashboard, Pencil, Ban, ShieldCheck,
   KeyRound, Search, ChevronLeft, ChevronRight, UserPlus, UserX, Activity,
+  PlayCircle, Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,8 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 interface BankTemplate { id: string; nome: string; logo_url: string | null; cor: string; abbr: string; }
 interface CardTemplate { id: string; nome: string; image_url: string | null; bandeira: string; }
 interface WhatsAppConfig { enabled: boolean; url: string; label: string; color: string; }
+interface TutorialVideo { id: string; title: string; url: string; order: number; }
+interface TutorialConfig { videos: TutorialVideo[]; }
 interface UserProfile {
   id: string; nome: string; email: string; whatsapp: string;
   avatar_url: string | null; created_at: string;
@@ -61,6 +64,12 @@ const Admin = () => {
   const [editUserOpen, setEditUserOpen] = useState(false);
   const [editUserForm, setEditUserForm] = useState({ id: "", nome: "", whatsapp: "" });
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [signupDisabled, setSignupDisabled] = useState(false);
+  const [savingSignup, setSavingSignup] = useState(false);
+  const [tutorialConfig, setTutorialConfig] = useState<TutorialConfig>({ videos: [] });
+  const [savingTutorial, setSavingTutorial] = useState(false);
+  const [newVideoTitle, setNewVideoTitle] = useState("");
+  const [newVideoUrl, setNewVideoUrl] = useState("");
 
   const bandeiras = ["Mastercard", "Visa", "Elo", "Amex", "Hipercard"];
 
@@ -79,18 +88,28 @@ const Admin = () => {
 
   const loadData = async (pw: string) => {
     const headers = { "x-admin-password": pw };
-    const [bankRes, cardRes, settingsRes, usersRes, dashRes] = await Promise.all([
+    const [bankRes, cardRes, settingsRes, usersRes, dashRes, signupRes, tutorialRes] = await Promise.all([
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=bank`, { headers }),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=card`, { headers }),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=whatsapp_support`),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=users`, { headers }),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=dashboard`, { headers }),
+      fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=signup_disabled`),
+      fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=tutorial_videos`),
     ]);
     if (bankRes.ok) setBankTemplates(await bankRes.json());
     if (cardRes.ok) setCardTemplates(await cardRes.json());
     if (settingsRes.ok) setWhatsappConfig(await settingsRes.json());
     if (usersRes.ok) setUsers(await usersRes.json());
     if (dashRes.ok) setStats(await dashRes.json());
+    if (signupRes.ok) {
+      const d = await signupRes.json();
+      if (d && d.disabled) setSignupDisabled(true);
+    }
+    if (tutorialRes.ok) {
+      const d = await tutorialRes.json();
+      if (d && d.videos) setTutorialConfig(d);
+    }
   };
 
   const handleLogin = async () => {
@@ -215,6 +234,45 @@ const Admin = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleToggleSignup = async () => {
+    try {
+      setSavingSignup(true);
+      const newVal = !signupDisabled;
+      await adminFetch("POST", "settings", { action: "update", key: "signup_disabled", value: { disabled: newVal } });
+      setSignupDisabled(newVal);
+      toast({ title: newVal ? "Cadastro desativado!" : "Cadastro ativado!" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    finally { setSavingSignup(false); }
+  };
+
+  const handleAddTutorialVideo = () => {
+    if (!newVideoTitle.trim() || !newVideoUrl.trim()) return;
+    const newVideo: TutorialVideo = {
+      id: Date.now().toString(),
+      title: newVideoTitle.trim(),
+      url: newVideoUrl.trim(),
+      order: tutorialConfig.videos.length,
+    };
+    setTutorialConfig(prev => ({ videos: [...prev.videos, newVideo] }));
+    setNewVideoTitle("");
+    setNewVideoUrl("");
+  };
+
+  const handleRemoveTutorialVideo = (id: string) => {
+    setTutorialConfig(prev => ({
+      videos: prev.videos.filter(v => v.id !== id).map((v, i) => ({ ...v, order: i })),
+    }));
+  };
+
+  const handleSaveTutorial = async () => {
+    try {
+      setSavingTutorial(true);
+      await adminFetch("POST", "settings", { action: "update", key: "tutorial_videos", value: tutorialConfig });
+      toast({ title: "Tutoriais salvos!" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    finally { setSavingTutorial(false); }
+  };
+
   const filteredUsers = users.filter(u =>
     u.nome.toLowerCase().includes(userSearch.toLowerCase()) ||
     u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -226,6 +284,7 @@ const Admin = () => {
     { id: "users", label: "Usuários", icon: Users },
     { id: "banks", label: "Bancos", icon: Building2 },
     { id: "cards", label: "Cartões", icon: CreditCard },
+    { id: "tutorials", label: "Tutoriais", icon: Video },
     { id: "settings", label: "Configurações", icon: Settings },
   ];
 
@@ -524,6 +583,45 @@ const Admin = () => {
             </>
           )}
 
+          {/* Tutorials */}
+          {activeSection === "tutorials" && (
+            <>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Tutoriais</h1>
+                <p className="text-sm text-muted-foreground">Gerencie os vídeos tutoriais do YouTube</p>
+              </div>
+              <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-5">
+                <h3 className="font-display font-semibold text-foreground">Adicionar Vídeo</h3>
+                <div className="grid gap-3">
+                  <div><Label>Título do vídeo</Label><Input value={newVideoTitle} onChange={(e) => setNewVideoTitle(e.target.value)} placeholder="Ex: Como cadastrar um banco" className="mt-1" /></div>
+                  <div><Label>URL do YouTube</Label><Input value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="mt-1" /></div>
+                  <Button onClick={handleAddTutorialVideo} variant="outline" className="gap-2 w-fit"><Plus className="w-4 h-4" /> Adicionar à lista</Button>
+                </div>
+              </div>
+              {tutorialConfig.videos.length > 0 && (
+                <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+                  <div className="p-4 border-b border-border">
+                    <h3 className="font-display font-semibold text-foreground text-sm">Vídeos ({tutorialConfig.videos.length})</h3>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {tutorialConfig.videos.map((video, idx) => (
+                      <div key={video.id} className="flex items-center gap-3 p-3">
+                        <span className="text-xs text-muted-foreground w-6 text-center">{idx + 1}</span>
+                        <PlayCircle className="w-4 h-4 text-primary flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground truncate">{video.title}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{video.url}</p>
+                        </div>
+                        <button onClick={() => handleRemoveTutorialVideo(video.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <Button onClick={handleSaveTutorial} disabled={savingTutorial} className="w-full gradient-primary text-primary-foreground">{savingTutorial ? "Salvando..." : "Salvar Tutoriais"}</Button>
+            </>
+          )}
+
           {/* Settings */}
           {activeSection === "settings" && (
             <>
@@ -531,9 +629,29 @@ const Admin = () => {
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Configurações</h1>
                 <p className="text-sm text-muted-foreground">Gerencie as configurações do sistema</p>
               </div>
+
+              {/* Signup Toggle */}
+              <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <UserPlus className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-semibold text-foreground">Cadastro de Usuários</h3>
+                    <p className="text-xs text-muted-foreground">Controle se novos usuários podem se cadastrar</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Desativar cadastro (Cadastre-se)</Label>
+                  <Switch checked={signupDisabled} onCheckedChange={(checked) => { setSignupDisabled(checked); }} disabled={savingSignup} />
+                </div>
+                <Button onClick={handleToggleSignup} disabled={savingSignup} className="w-full gradient-primary text-primary-foreground">{savingSignup ? "Salvando..." : "Salvar"}</Button>
+              </div>
+
+              {/* WhatsApp */}
               <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: whatsappConfig.color }}>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
                     <MessageCircle className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -544,13 +662,6 @@ const Admin = () => {
                 <div className="flex items-center justify-between"><Label>Ativar botão</Label><Switch checked={whatsappConfig.enabled} onCheckedChange={(checked) => setWhatsappConfig({ ...whatsappConfig, enabled: checked })} /></div>
                 <div><Label>URL do WhatsApp</Label><Input value={whatsappConfig.url} onChange={(e) => setWhatsappConfig({ ...whatsappConfig, url: e.target.value })} placeholder="https://wa.me/5511999999999" className="mt-1" /><p className="text-[10px] text-muted-foreground mt-1">Use o formato: https://wa.me/NUMERO</p></div>
                 <div><Label>Nome do botão</Label><Input value={whatsappConfig.label} onChange={(e) => setWhatsappConfig({ ...whatsappConfig, label: e.target.value })} placeholder="Suporte" className="mt-1" /></div>
-                <div>
-                  <Label>Cor do botão (HSL)</Label>
-                  <div className="flex items-center gap-3 mt-1">
-                    <Input value={whatsappConfig.color} onChange={(e) => setWhatsappConfig({ ...whatsappConfig, color: e.target.value })} placeholder="hsl(142, 70%, 45%)" />
-                    <div className="w-10 h-10 rounded-lg flex-shrink-0 border border-border" style={{ backgroundColor: whatsappConfig.color }} />
-                  </div>
-                </div>
                 <Button onClick={handleSaveWhatsapp} disabled={savingWhatsapp} className="w-full gradient-primary text-primary-foreground">{savingWhatsapp ? "Salvando..." : "Salvar Configuração"}</Button>
               </div>
             </>

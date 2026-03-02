@@ -2,7 +2,7 @@ import { ReactNode, useState, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, Landmark, TrendingUp,
-  BarChart3, Menu, X, User, LogOut, Sun, Moon, RefreshCw, MessageCircle,
+  BarChart3, Menu, X, User, LogOut, Sun, Moon, RefreshCw, MessageCircle, PlayCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -21,6 +21,7 @@ const navItems = [
   { path: "/bancos", label: "Bancos", icon: Landmark },
   { path: "/investimentos", label: "Investimentos", icon: TrendingUp },
   { path: "/relatorios", label: "Relatórios", icon: BarChart3 },
+  { path: "/tutorial", label: "Tutorial de Uso", icon: PlayCircle },
   { path: "/perfil", label: "Perfil", icon: User },
 ];
 
@@ -138,10 +139,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               rel="noopener noreferrer"
               title={sidebarCollapsed ? whatsapp.label : undefined}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium w-full transition-colors text-white",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium w-full transition-colors text-white bg-gradient-to-r from-emerald-500 to-emerald-700",
                 sidebarCollapsed && "justify-center px-0"
               )}
-              style={{ backgroundColor: whatsapp.color }}
             >
               <MessageCircle className="w-[18px] h-[18px] flex-shrink-0" />
               {!sidebarCollapsed && whatsapp.label}
@@ -209,8 +209,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 href={whatsapp.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium w-full text-white"
-                style={{ backgroundColor: whatsapp.color }}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium w-full text-white bg-gradient-to-r from-emerald-500 to-emerald-700"
                 onClick={() => setMobileOpen(false)}
               >
                 <MessageCircle className="w-5 h-5" />
@@ -223,7 +222,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 flex justify-around py-1.5 px-1">
-        {navItems.slice(0, 5).map((item) => {
+        {navItems.filter(i => ["/", "/lancamentos", "/cartoes", "/bancos", "/investimentos"].includes(i.path)).map((item) => {
           const active = location.pathname === item.path;
           return (
             <Link

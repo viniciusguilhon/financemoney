@@ -14,6 +14,7 @@ import Bancos from "@/pages/Bancos";
 import Investimentos from "@/pages/Investimentos";
 import Relatorios from "@/pages/Relatorios";
 import Perfil from "@/pages/Perfil";
+import Tutorial from "@/pages/Tutorial";
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ const ProtectedRoutes = () => {
           <Route path="/bancos" element={<Bancos />} />
           <Route path="/investimentos" element={<Investimentos />} />
           <Route path="/relatorios" element={<Relatorios />} />
+          <Route path="/tutorial" element={<Tutorial />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

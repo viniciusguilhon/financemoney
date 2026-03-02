@@ -167,16 +167,30 @@ Deno.serve(async (req) => {
       if (type === "settings") {
         if (action === "update") {
           const { key, value } = body;
-          const { data, error } = await supabase
-            .from("app_settings")
-            .update({ value, updated_at: new Date().toISOString() })
-            .eq("key", key)
-            .select()
-            .single();
-          if (error) throw error;
-          return new Response(JSON.stringify(data), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          // Try update first, if no rows affected, insert
+          const { data: existing } = await supabase.from("app_settings").select("id").eq("key", key).single();
+          if (existing) {
+            const { data, error } = await supabase
+              .from("app_settings")
+              .update({ value, updated_at: new Date().toISOString() })
+              .eq("key", key)
+              .select()
+              .single();
+            if (error) throw error;
+            return new Response(JSON.stringify(data), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          } else {
+            const { data, error } = await supabase
+              .from("app_settings")
+              .insert({ key, value, updated_at: new Date().toISOString() })
+              .select()
+              .single();
+            if (error) throw error;
+            return new Response(JSON.stringify(data), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
         }
       }
 
