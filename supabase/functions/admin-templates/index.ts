@@ -23,10 +23,15 @@ Deno.serve(async (req) => {
   if (req.method === "GET" && type === "settings") {
     const key = url.searchParams.get("key");
     if (key) {
-      const { data, error } = await supabase.from("app_settings").select("value").eq("key", key).single();
+      const { data, error } = await supabase.from("app_settings").select("value").eq("key", key).maybeSingle();
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
-          status: 404,
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!data) {
+        return new Response(JSON.stringify(null), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
