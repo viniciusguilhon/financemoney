@@ -55,9 +55,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       .catch(() => {});
   }, []);
 
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await refreshData();
+    setRefreshKey((k) => k + 1);
     setTimeout(() => setRefreshing(false), 600);
   };
 
@@ -242,7 +245,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       {/* Main Content */}
       <main className={cn("flex-1 pt-14 md:pt-0 pb-16 md:pb-0 transition-all duration-200", mainMargin)}>
-        <div className="p-3 md:p-8 max-w-7xl mx-auto">
+        <div key={refreshKey} className="p-3 md:p-8 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
