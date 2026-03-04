@@ -99,16 +99,19 @@ const Admin = () => {
     ]);
     if (bankRes.ok) setBankTemplates(await bankRes.json());
     if (cardRes.ok) setCardTemplates(await cardRes.json());
-    if (settingsRes.ok) setWhatsappConfig(await settingsRes.json());
+    if (settingsRes.ok) {
+      const d = await settingsRes.json();
+      if (d && typeof d === 'object') setWhatsappConfig(prev => ({ ...prev, ...d }));
+    }
     if (usersRes.ok) setUsers(await usersRes.json());
     if (dashRes.ok) setStats(await dashRes.json());
     if (signupRes.ok) {
       const d = await signupRes.json();
-      if (d && d.disabled) setSignupDisabled(true);
+      setSignupDisabled(d?.disabled === true);
     }
     if (tutorialRes.ok) {
       const d = await tutorialRes.json();
-      if (d && d.videos) setTutorialConfig(d);
+      if (d && Array.isArray(d.videos)) setTutorialConfig(d);
     }
   };
 
@@ -237,10 +240,8 @@ const Admin = () => {
   const handleToggleSignup = async () => {
     try {
       setSavingSignup(true);
-      const newVal = !signupDisabled;
-      await adminFetch("POST", "settings", { action: "update", key: "signup_disabled", value: { disabled: newVal } });
-      setSignupDisabled(newVal);
-      toast({ title: newVal ? "Cadastro desativado!" : "Cadastro ativado!" });
+      await adminFetch("POST", "settings", { action: "update", key: "signup_disabled", value: { disabled: signupDisabled } });
+      toast({ title: signupDisabled ? "Cadastro desativado!" : "Cadastro ativado!" });
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
     finally { setSavingSignup(false); }
   };
