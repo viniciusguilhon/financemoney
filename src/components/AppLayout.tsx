@@ -233,7 +233,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <item.icon className={cn("w-4 h-4", active && "text-primary")} />
+              <item.icon className={cn("w-5 h-5", active && "text-primary")} />
               {item.label}
             </Link>
           );
