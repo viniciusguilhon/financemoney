@@ -1,4 +1,4 @@
-const MoneyLogo = ({ size = "md" }: { size?: "sm" | "md" | "lg" }) => {
+const MoneyLogo = ({ size = "md", hideText = false }: { size?: "sm" | "md" | "lg"; hideText?: boolean }) => {
   const sizes = { sm: "w-8 h-8", md: "w-9 h-9", lg: "w-12 h-12" };
   const textSizes = { sm: "text-base", md: "text-lg", lg: "text-xl" };
 
@@ -35,14 +35,16 @@ const MoneyLogo = ({ size = "md" }: { size?: "sm" | "md" | "lg" }) => {
           <circle cx="28" cy="8" r="1" fill="white" opacity="0.4" />
         </svg>
       </div>
-      <div className="flex flex-col leading-none">
-        <span className={`font-display ${textSizes[size]} font-extrabold tracking-tight text-foreground`}>
-          Money
-        </span>
-        <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-primary opacity-80">
-          Finance
-        </span>
-      </div>
+      {!hideText && (
+        <div className="flex flex-col leading-none">
+          <span className={`font-display ${textSizes[size]} font-extrabold tracking-tight text-foreground`}>
+            Money
+          </span>
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-primary opacity-80">
+            Finance
+          </span>
+        </div>
+      )}
     </div>
   );
 };
