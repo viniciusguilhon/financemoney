@@ -68,7 +68,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const mainMargin = sidebarCollapsed ? "md:ml-16" : "md:ml-60";
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background overflow-x-hidden">
       {/* Desktop/Tablet Sidebar */}
       <aside className={cn("hidden md:flex flex-col bg-sidebar fixed h-full z-30 transition-all duration-200", sidebarWidth)}>
         <div className="flex items-center justify-between px-3 py-5 cursor-pointer" onClick={() => navigate("/")}>
