@@ -73,7 +73,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <aside className={cn("hidden md:flex flex-col bg-sidebar fixed h-full z-30 transition-all duration-200", sidebarWidth)}>
         <div className="flex items-center justify-between px-3 py-5 cursor-pointer" onClick={() => navigate("/")}>
           {!sidebarCollapsed && <MoneyLogo />}
-          {sidebarCollapsed && <div className="w-full flex justify-center"><MoneyLogo size="sm" /></div>}
+          {sidebarCollapsed && <div className="w-full flex justify-center"><MoneyLogo size="sm" hideText /></div>}
         </div>
 
         {/* Hamburger toggle */}
