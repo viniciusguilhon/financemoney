@@ -25,7 +25,7 @@ const ConfirmDialog = ({
   confirmLabel = "Excluir",
 }: ConfirmDialogProps) => (
   <AlertDialog open={open} onOpenChange={onOpenChange}>
-    <AlertDialogContent>
+    <AlertDialogContent className="max-w-[320px] rounded-2xl p-5">
       <AlertDialogHeader>
         <AlertDialogTitle>{title}</AlertDialogTitle>
         <AlertDialogDescription>{description}</AlertDialogDescription>
