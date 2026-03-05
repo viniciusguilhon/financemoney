@@ -194,6 +194,7 @@ const Lancamentos = () => {
       <Tabs defaultValue="transacoes" className="w-full overflow-hidden">
         <TabsList className="w-full sm:w-auto overflow-x-auto">
           <TabsTrigger value="transacoes" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><ArrowUpRight className="w-4 h-4" /> Transações</TabsTrigger>
+          <TabsTrigger value="rendas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><ArrowDownRight className="w-4 h-4" /> Rendas</TabsTrigger>
           <TabsTrigger value="contas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><Receipt className="w-4 h-4" /> Contas</TabsTrigger>
           <TabsTrigger value="metas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><Target className="w-4 h-4" /> Metas</TabsTrigger>
         </TabsList>
@@ -303,11 +304,11 @@ const Lancamentos = () => {
                 </SelectContent>
               </Select>
               <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-                <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Categoria" /></SelectTrigger>
+                <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Categoria" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas categorias</SelectItem>
-                  {[...new Set(monthTx.map(t => t.categoria))].map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat.id} value={cat.nome}>{cat.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -368,6 +369,46 @@ const Lancamentos = () => {
                 ))}
               </div>
             )}
+          </div>
+        </TabsContent>
+
+        {/* Tab: Rendas */}
+        <TabsContent value="rendas" className="space-y-4 mt-4">
+          <div className="bg-card rounded-xl shadow-card overflow-hidden">
+            {(() => {
+              const rendas = monthTx.filter(t => t.tipo === "entrada");
+              if (rendas.length === 0) return (
+                <div className="p-12 text-center text-muted-foreground text-sm">Nenhuma renda encontrada neste mês.</div>
+              );
+              return (
+                <div className="divide-y divide-border">
+                  {rendas.map((tx) => (
+                    <div key={tx.id} className="flex items-center justify-between p-3 md:p-4 hover:bg-muted/50 transition-colors gap-2">
+                      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-accent">
+                          <ArrowUpRight className="w-4 h-4 text-success" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs md:text-sm font-medium text-foreground truncate">{tx.descricao}</p>
+                          <p className="text-[10px] md:text-xs text-muted-foreground">{tx.categoria} • {tx.conta} • {new Date(tx.data + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="text-xs md:text-sm font-bold text-success whitespace-nowrap">+ {fmt(tx.valor)}</span>
+                        <button onClick={() => togglePago(tx.id)} className={`text-[10px] md:text-xs px-2 py-0.5 md:py-1 rounded-full font-medium cursor-pointer whitespace-nowrap ${tx.pago ? "bg-accent text-accent-foreground" : "bg-warning/10 text-warning"}`}>
+                          {tx.pago ? <Check className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                        </button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(tx)}><Pencil className="w-3 h-3" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(tx.id)}><Trash2 className="w-3 h-3" /></Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+          <div className="text-xs text-muted-foreground text-right">
+            Total de rendas: <span className="font-semibold text-success">{fmt(monthTx.filter(t => t.tipo === "entrada").reduce((s, t) => s + t.valor, 0))}</span>
           </div>
         </TabsContent>
 
