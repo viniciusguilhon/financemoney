@@ -97,7 +97,7 @@ const Dashboard = () => {
     name, value, color: colors[i % colors.length],
   }));
 
-  const lastTx = monthTx.slice(0, 5);
+  const lastTx = [...monthTx].sort((a, b) => b.data.localeCompare(a.data)).slice(0, 5);
   const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
   const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -404,7 +404,7 @@ const Dashboard = () => {
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{tx.descricao}</p>
-                      <p className="text-[9px] md:text-[10px] text-muted-foreground truncate">{tx.categoria} • {tx.conta}</p>
+                      <p className="text-[9px] md:text-[10px] text-muted-foreground truncate">{tx.categoria} • {tx.conta} • {new Date(tx.data + "T12:00:00").toLocaleDateString("pt-BR")}</p>
                     </div>
                   </div>
                   <span className={`text-xs font-bold whitespace-nowrap ${tx.tipo === "entrada" ? "text-success" : "text-destructive"}`}>
