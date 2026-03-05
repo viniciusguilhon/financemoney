@@ -182,7 +182,7 @@ const Lancamentos = () => {
   const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 overflow-x-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-3xl font-display font-bold text-foreground">Lançamentos</h1>
@@ -191,11 +191,11 @@ const Lancamentos = () => {
         <MonthYearSelector />
       </div>
 
-      <Tabs defaultValue="transacoes" className="w-full">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="transacoes" className="gap-1.5 text-sm py-2.5 px-4"><ArrowUpRight className="w-4 h-4" /> Transações</TabsTrigger>
-          <TabsTrigger value="contas" className="gap-1.5 text-sm py-2.5 px-4"><Receipt className="w-4 h-4" /> Contas</TabsTrigger>
-          <TabsTrigger value="metas" className="gap-1.5 text-sm py-2.5 px-4"><Target className="w-4 h-4" /> Metas</TabsTrigger>
+      <Tabs defaultValue="transacoes" className="w-full overflow-hidden">
+        <TabsList className="w-full sm:w-auto overflow-x-auto">
+          <TabsTrigger value="transacoes" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><ArrowUpRight className="w-4 h-4" /> Transações</TabsTrigger>
+          <TabsTrigger value="contas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><Receipt className="w-4 h-4" /> Contas</TabsTrigger>
+          <TabsTrigger value="metas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><Target className="w-4 h-4" /> Metas</TabsTrigger>
         </TabsList>
 
         {/* Tab: Transações */}
