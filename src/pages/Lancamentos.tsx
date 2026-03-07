@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Plus, Search, ArrowUpRight, ArrowDownRight, Check, Clock, Pencil, Trash2, Receipt, Target, Upload, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useFinance, Transaction, SavingsGoal } from "@/contexts/FinanceContext";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import MonthYearSelector from "@/components/MonthYearSelector";
@@ -18,10 +21,11 @@ import ImageCropper from "@/components/ImageCropper";
 const Lancamentos = () => {
   const {
     getMonthTransactions, addTransaction, updateTransaction, deleteTransaction,
-    categories, banks, currentMesAno,
+    categories, banks, currentMesAno, transactions,
     addCategory,
     getMonthBills, addBill, updateBill, deleteBill,
     savingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
+    currentMonth, currentYear,
   } = useFinance();
   const { user } = useAuth();
   const monthTx = getMonthTransactions();
@@ -410,6 +414,39 @@ const Lancamentos = () => {
           <div className="text-xs text-muted-foreground text-right">
             Total de rendas: <span className="font-semibold text-success">{fmt(monthTx.filter(t => t.tipo === "entrada").reduce((s, t) => s + t.valor, 0))}</span>
           </div>
+
+          {/* Gráfico de maiores rendas por mês */}
+          {(() => {
+            const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            const incomeByMonth = Array.from({ length: 6 }, (_, i) => {
+              const d = new Date(currentYear, currentMonth - 1 - (5 - i), 1);
+              const mesAno = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+              const total = transactions
+                .filter((t) => t.tipo === "entrada" && t.mesAno === mesAno)
+                .reduce((a, t) => a + t.valor, 0);
+              return { mes: `${monthNames[d.getMonth()]}/${d.getFullYear().toString().slice(2)}`, total };
+            });
+
+            return (
+              <div className="bg-card rounded-xl p-4 md:p-5 shadow-card border border-border">
+                <h3 className="font-display font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
+                  <ArrowUpRight className="w-4 h-4 text-success" /> Evolução de Rendas (últimos 6 meses)
+                </h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={incomeByMonth} barGap={4}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="mes" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
+                    <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
+                    <Tooltip
+                      formatter={(value: number) => [fmt(value), "Rendas"]}
+                      contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}
+                    />
+                    <Bar dataKey="total" fill="hsl(152, 60%, 42%)" radius={[6, 6, 0, 0]} name="Rendas" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            );
+          })()}
         </TabsContent>
 
         {/* Tab: Contas a Pagar/Receber */}
