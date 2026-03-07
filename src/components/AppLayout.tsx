@@ -151,7 +151,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             </a>
           )}
 
-          {!sidebarCollapsed && <p className="text-[10px] text-sidebar-foreground/30 text-center mt-3">Money © 2026</p>}
+          {!sidebarCollapsed && <p className="text-[10px] text-sidebar-foreground/30 text-center mt-3">Finanças PRO © 2026</p>}
         </div>
       </aside>
 
