@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowUpRight, ArrowDownRight,
-  CreditCard, Landmark, BarChart3, Receipt, Target, DollarSign, ShieldCheck, User,
+  CreditCard, Landmark, BarChart3, Receipt, Target, DollarSign, ShieldCheck, User, PlayCircle,
 } from "lucide-react";
 import MonthYearSelector from "@/components/MonthYearSelector";
 import { useFinance, BANK_LOGOS } from "@/contexts/FinanceContext";
@@ -14,6 +15,7 @@ import {
 } from "recharts";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const {
     getMonthTransactions, currentMonth, currentYear, transactions,
     cards, banks, investments, getMonthBills, savingsGoals,
@@ -121,7 +123,16 @@ const Dashboard = () => {
             <p className="text-xs md:text-sm text-muted-foreground">{monthNames[currentMonth - 1]} de {currentYear}</p>
           </div>
         </div>
-        <MonthYearSelector />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/tutorial")}
+            className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium gradient-primary text-primary-foreground"
+          >
+            <PlayCircle className="w-4 h-4" />
+            Tutorial
+          </button>
+          <MonthYearSelector />
+        </div>
       </div>
 
       {/* Hero KPIs */}
