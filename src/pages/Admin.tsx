@@ -263,19 +263,25 @@ const Admin = () => {
   };
 
   const handleCreateUser = async () => {
-    if (!createUserForm.email || !createUserForm.password) {
-      toast({ title: "E-mail e senha são obrigatórios", variant: "destructive" });
+    if (!createUserForm.email && !createUserForm.nome) {
+      toast({ title: "Informe pelo menos o nome de usuário ou e-mail", variant: "destructive" });
+      return;
+    }
+    if (!createUserForm.password) {
+      toast({ title: "A senha é obrigatória", variant: "destructive" });
       return;
     }
     if (createUserForm.password.length < 6) {
       toast({ title: "A senha deve ter pelo menos 6 caracteres", variant: "destructive" });
       return;
     }
+    // If no email, generate a placeholder email from nome
+    const email = createUserForm.email || `${createUserForm.nome.toLowerCase().replace(/\s+/g, '.')}@user.local`;
     try {
       setCreatingUser(true);
       await adminFetch("POST", "users", {
         action: "create",
-        email: createUserForm.email,
+        email,
         password: createUserForm.password,
         nome: createUserForm.nome,
         whatsapp: createUserForm.whatsapp,
