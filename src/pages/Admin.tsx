@@ -306,22 +306,59 @@ const Admin = () => {
     finally { setSavingSignup(false); }
   };
 
+  const handleAddPlaylist = () => {
+    if (!newPlaylistName.trim()) return;
+    const newPlaylist: TutorialPlaylist = {
+      id: Date.now().toString(),
+      name: newPlaylistName.trim(),
+      videos: [],
+    };
+    setTutorialConfig(prev => ({ playlists: [...(prev.playlists || []), newPlaylist] }));
+    setActivePlaylistId(newPlaylist.id);
+    setNewPlaylistName("");
+  };
+
+  const handleRenamePlaylist = (id: string, name: string) => {
+    setTutorialConfig(prev => ({
+      playlists: (prev.playlists || []).map(p => p.id === id ? { ...p, name } : p),
+    }));
+    setEditPlaylistId(null);
+  };
+
+  const handleDeletePlaylist = (id: string) => {
+    setTutorialConfig(prev => {
+      const playlists = (prev.playlists || []).filter(p => p.id !== id);
+      if (activePlaylistId === id) setActivePlaylistId(playlists[0]?.id || null);
+      return { playlists };
+    });
+  };
+
   const handleAddTutorialVideo = () => {
-    if (!newVideoTitle.trim() || !newVideoUrl.trim()) return;
+    if (!newVideoTitle.trim() || !newVideoUrl.trim() || !activePlaylistId) return;
     const newVideo: TutorialVideo = {
       id: Date.now().toString(),
       title: newVideoTitle.trim(),
       url: newVideoUrl.trim(),
-      order: tutorialConfig.videos.length,
+      order: 0,
     };
-    setTutorialConfig(prev => ({ videos: [...prev.videos, newVideo] }));
+    setTutorialConfig(prev => ({
+      playlists: (prev.playlists || []).map(p =>
+        p.id === activePlaylistId
+          ? { ...p, videos: [...p.videos, { ...newVideo, order: p.videos.length }] }
+          : p
+      ),
+    }));
     setNewVideoTitle("");
     setNewVideoUrl("");
   };
 
-  const handleRemoveTutorialVideo = (id: string) => {
+  const handleRemoveTutorialVideo = (videoId: string) => {
     setTutorialConfig(prev => ({
-      videos: prev.videos.filter(v => v.id !== id).map((v, i) => ({ ...v, order: i })),
+      playlists: (prev.playlists || []).map(p =>
+        p.id === activePlaylistId
+          ? { ...p, videos: p.videos.filter(v => v.id !== videoId).map((v, i) => ({ ...v, order: i })) }
+          : p
+      ),
     }));
   };
 
@@ -333,6 +370,9 @@ const Admin = () => {
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
     finally { setSavingTutorial(false); }
   };
+
+  const activePlaylist = (tutorialConfig.playlists || []).find(p => p.id === activePlaylistId);
+  const totalVideos = (tutorialConfig.playlists || []).reduce((sum, p) => sum + p.videos.length, 0);
 
   const filteredUsers = users.filter(u =>
     u.nome.toLowerCase().includes(userSearch.toLowerCase()) ||
