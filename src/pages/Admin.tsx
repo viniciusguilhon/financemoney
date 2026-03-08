@@ -126,7 +126,17 @@ const Admin = () => {
     }
     if (tutorialRes.ok) {
       const d = await tutorialRes.json();
-      if (d && Array.isArray(d.videos)) setTutorialConfig(d);
+      if (d) {
+        // Migrate old format (flat videos) to new playlists format
+        if (Array.isArray(d.playlists)) {
+          setTutorialConfig(d);
+          if (d.playlists.length > 0 && !activePlaylistId) setActivePlaylistId(d.playlists[0].id);
+        } else if (Array.isArray(d.videos) && d.videos.length > 0) {
+          const migrated: TutorialConfig = { playlists: [{ id: "default", name: "Playlist Principal", videos: d.videos }] };
+          setTutorialConfig(migrated);
+          setActivePlaylistId("default");
+        }
+      }
     }
   };
 
