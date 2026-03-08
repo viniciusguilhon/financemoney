@@ -29,6 +29,11 @@ interface DashboardStats { totalUsers: number; newThisMonth: number; activeToday
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
+const extractYouTubeId = (url: string): string | null => {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/);
+  return match ? match[1] : null;
+};
+
 const Admin = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
