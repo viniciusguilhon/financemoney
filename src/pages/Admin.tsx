@@ -73,10 +73,14 @@ const Admin = () => {
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [signupDisabled, setSignupDisabled] = useState(false);
   const [savingSignup, setSavingSignup] = useState(false);
-  const [tutorialConfig, setTutorialConfig] = useState<TutorialConfig>({ videos: [] });
+  const [tutorialConfig, setTutorialConfig] = useState<TutorialConfig>({ playlists: [] });
   const [savingTutorial, setSavingTutorial] = useState(false);
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [editPlaylistId, setEditPlaylistId] = useState<string | null>(null);
+  const [editPlaylistName, setEditPlaylistName] = useState("");
 
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserForm, setCreateUserForm] = useState({ email: "", password: "", nome: "", whatsapp: "" });
