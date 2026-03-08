@@ -440,11 +440,14 @@ const Admin = () => {
           {/* Users */}
           {activeSection === "users" && (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Usuários</h1>
                   <p className="text-sm text-muted-foreground">{users.length} usuário(s) cadastrado(s)</p>
                 </div>
+                <Button onClick={() => setCreateUserOpen(true)} className="gradient-primary text-primary-foreground gap-2">
+                  <UserPlus className="w-4 h-4" /> Adicionar Usuário
+                </Button>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
