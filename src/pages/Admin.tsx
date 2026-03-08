@@ -19,7 +19,8 @@ interface BankTemplate { id: string; nome: string; logo_url: string | null; cor:
 interface CardTemplate { id: string; nome: string; image_url: string | null; bandeira: string; }
 interface WhatsAppConfig { enabled: boolean; url: string; label: string; color: string; }
 interface TutorialVideo { id: string; title: string; url: string; order: number; }
-interface TutorialConfig { videos: TutorialVideo[]; }
+interface TutorialPlaylist { id: string; name: string; videos: TutorialVideo[]; }
+interface TutorialConfig { playlists?: TutorialPlaylist[]; videos?: TutorialVideo[]; }
 interface UserProfile {
   id: string; nome: string; email: string; whatsapp: string;
   avatar_url: string | null; created_at: string;
