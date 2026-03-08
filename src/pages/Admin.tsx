@@ -3,7 +3,7 @@ import {
   Eye, EyeOff, Plus, Trash2, Upload, Lock, CreditCard, Building2, MessageCircle,
   Settings, Users, User, Phone, Mail, LayoutDashboard, Pencil, Ban, ShieldCheck,
   KeyRound, Search, ChevronLeft, ChevronRight, UserPlus, UserX, Activity,
-  PlayCircle, Video,
+  PlayCircle, Video, GripVertical, Image,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import MoneyLogo from "@/components/MoneyLogo";
 
 interface BankTemplate { id: string; nome: string; logo_url: string | null; cor: string; abbr: string; }
 interface CardTemplate { id: string; nome: string; image_url: string | null; bandeira: string; }
