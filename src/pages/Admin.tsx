@@ -762,6 +762,20 @@ const Admin = () => {
         </div>
       </main>
 
+      {/* Create User Dialog */}
+      <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Adicionar Usuário</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div><Label>Nome</Label><Input value={createUserForm.nome} onChange={(e) => setCreateUserForm({ ...createUserForm, nome: e.target.value })} placeholder="Nome do usuário" /></div>
+            <div><Label>E-mail *</Label><Input type="email" value={createUserForm.email} onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })} placeholder="email@exemplo.com" /></div>
+            <div><Label>Senha *</Label><Input type="password" value={createUserForm.password} onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })} placeholder="Mínimo 6 caracteres" /></div>
+            <div><Label>WhatsApp</Label><Input value={createUserForm.whatsapp} onChange={(e) => setCreateUserForm({ ...createUserForm, whatsapp: e.target.value })} placeholder="(11) 99999-9999" /></div>
+            <Button onClick={handleCreateUser} disabled={creatingUser} className="gradient-primary text-primary-foreground">{creatingUser ? "Criando..." : "Criar Usuário"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit User Dialog */}
       <Dialog open={editUserOpen} onOpenChange={setEditUserOpen}>
         <DialogContent className="sm:max-w-sm">
