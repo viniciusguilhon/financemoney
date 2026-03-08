@@ -11,7 +11,7 @@ const MoneyLogo = ({ size = "md", hideText = false }: { size?: "sm" | "md" | "lg
       </div>
       {!hideText && (
         <div className="flex flex-col leading-none">
-          <span className={`font-display ${textSizes[size]} font-extrabold tracking-tight text-foreground`}>
+          <span className={`font-display ${textSizes[size]} font-extrabold tracking-tight text-gradient`}>
             Finanças
           </span>
           <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-primary opacity-80">
