@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PlayCircle, Play, SkipForward, SkipBack, ListVideo, MonitorPlay } from "lucide-react";
+import { PlayCircle, Play, SkipForward, SkipBack, ListVideo, MonitorPlay, ChevronDown } from "lucide-react";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -10,13 +10,20 @@ interface TutorialVideo {
   order: number;
 }
 
+interface TutorialPlaylist {
+  id: string;
+  name: string;
+  videos: TutorialVideo[];
+}
+
 const extractYouTubeId = (url: string): string | null => {
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/);
   return match ? match[1] : null;
 };
 
 const Tutorial = () => {
-  const [videos, setVideos] = useState<TutorialVideo[]>([]);
+  const [playlists, setPlaylists] = useState<TutorialPlaylist[]>([]);
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
   const [activeVideo, setActiveVideo] = useState<TutorialVideo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,23 +31,49 @@ const Tutorial = () => {
     fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=tutorial_videos`)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
-        if (data && Array.isArray(data.videos)) {
-          const sorted = data.videos.sort((a: TutorialVideo, b: TutorialVideo) => a.order - b.order);
-          setVideos(sorted);
-          if (sorted.length > 0) setActiveVideo(sorted[0]);
+        if (data) {
+          // Support new playlists format
+          if (Array.isArray(data.playlists) && data.playlists.length > 0) {
+            setPlaylists(data.playlists);
+            setActivePlaylistId(data.playlists[0].id);
+            const firstPlaylist = data.playlists[0];
+            if (firstPlaylist.videos.length > 0) {
+              setActiveVideo(firstPlaylist.videos.sort((a: TutorialVideo, b: TutorialVideo) => a.order - b.order)[0]);
+            }
+          }
+          // Fallback to old format (flat videos array)
+          else if (Array.isArray(data.videos) && data.videos.length > 0) {
+            const sorted = data.videos.sort((a: TutorialVideo, b: TutorialVideo) => a.order - b.order);
+            const legacyPlaylist: TutorialPlaylist = { id: "default", name: "Tutoriais", videos: sorted };
+            setPlaylists([legacyPlaylist]);
+            setActivePlaylistId("default");
+            setActiveVideo(sorted[0]);
+          }
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
+  const activePlaylist = playlists.find(p => p.id === activePlaylistId);
+  const sortedVideos = activePlaylist?.videos.sort((a, b) => a.order - b.order) || [];
   const activeYouTubeId = activeVideo ? extractYouTubeId(activeVideo.url) : null;
-  const activeIdx = activeVideo ? videos.findIndex(v => v.id === activeVideo.id) : -1;
+  const activeIdx = activeVideo ? sortedVideos.findIndex(v => v.id === activeVideo.id) : -1;
 
   const goToVideo = (direction: "prev" | "next") => {
-    if (!activeVideo || videos.length <= 1) return;
-    if (direction === "prev" && activeIdx > 0) setActiveVideo(videos[activeIdx - 1]);
-    if (direction === "next" && activeIdx < videos.length - 1) setActiveVideo(videos[activeIdx + 1]);
+    if (!activeVideo || sortedVideos.length <= 1) return;
+    if (direction === "prev" && activeIdx > 0) setActiveVideo(sortedVideos[activeIdx - 1]);
+    if (direction === "next" && activeIdx < sortedVideos.length - 1) setActiveVideo(sortedVideos[activeIdx + 1]);
+  };
+
+  const handlePlaylistChange = (playlistId: string) => {
+    setActivePlaylistId(playlistId);
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (playlist && playlist.videos.length > 0) {
+      setActiveVideo(playlist.videos.sort((a, b) => a.order - b.order)[0]);
+    } else {
+      setActiveVideo(null);
+    }
   };
 
   if (loading) {
@@ -55,7 +88,7 @@ const Tutorial = () => {
     );
   }
 
-  if (videos.length === 0) {
+  if (playlists.length === 0 || (playlists.length === 1 && playlists[0].videos.length === 0)) {
     return (
       <div className="space-y-6">
         <div>
@@ -74,14 +107,31 @@ const Tutorial = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl md:text-3xl font-display font-bold text-foreground">Tutorial de Uso</h1>
           <p className="text-muted-foreground text-xs md:text-sm mt-1">Aprenda a usar o sistema com nossos vídeos</p>
         </div>
-        <div className="hidden md:flex items-center gap-2 bg-muted/60 rounded-full px-3 py-1.5">
-          <ListVideo className="w-4 h-4 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">{videos.length} {videos.length === 1 ? "vídeo" : "vídeos"}</span>
+        <div className="flex items-center gap-2">
+          {/* Playlist Selector */}
+          {playlists.length > 1 && (
+            <div className="relative">
+              <select
+                value={activePlaylistId || ""}
+                onChange={(e) => handlePlaylistChange(e.target.value)}
+                className="appearance-none bg-card border border-border rounded-xl pl-3 pr-8 py-2 text-sm font-medium text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                {playlists.map((pl) => (
+                  <option key={pl.id} value={pl.id}>{pl.name} ({pl.videos.length})</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            </div>
+          )}
+          <div className="hidden md:flex items-center gap-2 bg-muted/60 rounded-full px-3 py-1.5">
+            <ListVideo className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">{sortedVideos.length} {sortedVideos.length === 1 ? "vídeo" : "vídeos"}</span>
+          </div>
         </div>
       </div>
 
@@ -105,7 +155,8 @@ const Tutorial = () => {
                     <h2 className="font-display font-bold text-foreground text-base md:text-lg leading-tight">{activeVideo.title}</h2>
                     <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
                       <PlayCircle className="w-3.5 h-3.5" />
-                      Vídeo {activeIdx + 1} de {videos.length}
+                      Vídeo {activeIdx + 1} de {sortedVideos.length}
+                      {activePlaylist && playlists.length > 1 && <span className="text-muted-foreground/60">· {activePlaylist.name}</span>}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -119,7 +170,7 @@ const Tutorial = () => {
                     </button>
                     <button
                       onClick={() => goToVideo("next")}
-                      disabled={activeIdx === videos.length - 1}
+                      disabled={activeIdx === sortedVideos.length - 1}
                       className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                       title="Próximo vídeo"
                     >
@@ -137,13 +188,13 @@ const Tutorial = () => {
           <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
             <div className="p-4 border-b border-border flex items-center gap-2">
               <ListVideo className="w-4 h-4 text-primary" />
-              <h3 className="font-display font-semibold text-foreground text-sm">Playlist</h3>
+              <h3 className="font-display font-semibold text-foreground text-sm">{activePlaylist?.name || "Playlist"}</h3>
               <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">
-                {videos.length}
+                {sortedVideos.length}
               </span>
             </div>
             <div className="max-h-[420px] overflow-y-auto">
-              {videos.map((video, idx) => {
+              {sortedVideos.map((video, idx) => {
                 const ytId = extractYouTubeId(video.url);
                 const isActive = activeVideo?.id === video.id;
                 return (

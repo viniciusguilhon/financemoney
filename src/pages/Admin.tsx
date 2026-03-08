@@ -19,7 +19,8 @@ interface BankTemplate { id: string; nome: string; logo_url: string | null; cor:
 interface CardTemplate { id: string; nome: string; image_url: string | null; bandeira: string; }
 interface WhatsAppConfig { enabled: boolean; url: string; label: string; color: string; }
 interface TutorialVideo { id: string; title: string; url: string; order: number; }
-interface TutorialConfig { videos: TutorialVideo[]; }
+interface TutorialPlaylist { id: string; name: string; videos: TutorialVideo[]; }
+interface TutorialConfig { playlists?: TutorialPlaylist[]; videos?: TutorialVideo[]; }
 interface UserProfile {
   id: string; nome: string; email: string; whatsapp: string;
   avatar_url: string | null; created_at: string;
@@ -72,10 +73,14 @@ const Admin = () => {
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [signupDisabled, setSignupDisabled] = useState(false);
   const [savingSignup, setSavingSignup] = useState(false);
-  const [tutorialConfig, setTutorialConfig] = useState<TutorialConfig>({ videos: [] });
+  const [tutorialConfig, setTutorialConfig] = useState<TutorialConfig>({ playlists: [] });
   const [savingTutorial, setSavingTutorial] = useState(false);
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [editPlaylistId, setEditPlaylistId] = useState<string | null>(null);
+  const [editPlaylistName, setEditPlaylistName] = useState("");
 
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserForm, setCreateUserForm] = useState({ email: "", password: "", nome: "", whatsapp: "" });
@@ -121,7 +126,17 @@ const Admin = () => {
     }
     if (tutorialRes.ok) {
       const d = await tutorialRes.json();
-      if (d && Array.isArray(d.videos)) setTutorialConfig(d);
+      if (d) {
+        // Migrate old format (flat videos) to new playlists format
+        if (Array.isArray(d.playlists)) {
+          setTutorialConfig(d);
+          if (d.playlists.length > 0 && !activePlaylistId) setActivePlaylistId(d.playlists[0].id);
+        } else if (Array.isArray(d.videos) && d.videos.length > 0) {
+          const migrated: TutorialConfig = { playlists: [{ id: "default", name: "Playlist Principal", videos: d.videos }] };
+          setTutorialConfig(migrated);
+          setActivePlaylistId("default");
+        }
+      }
     }
   };
 
@@ -248,19 +263,25 @@ const Admin = () => {
   };
 
   const handleCreateUser = async () => {
-    if (!createUserForm.email || !createUserForm.password) {
-      toast({ title: "E-mail e senha são obrigatórios", variant: "destructive" });
+    if (!createUserForm.email && !createUserForm.nome) {
+      toast({ title: "Informe pelo menos o nome de usuário ou e-mail", variant: "destructive" });
+      return;
+    }
+    if (!createUserForm.password) {
+      toast({ title: "A senha é obrigatória", variant: "destructive" });
       return;
     }
     if (createUserForm.password.length < 6) {
       toast({ title: "A senha deve ter pelo menos 6 caracteres", variant: "destructive" });
       return;
     }
+    // If no email, generate a placeholder email from nome
+    const email = createUserForm.email || `${createUserForm.nome.toLowerCase().replace(/\s+/g, '.')}@user.local`;
     try {
       setCreatingUser(true);
       await adminFetch("POST", "users", {
         action: "create",
-        email: createUserForm.email,
+        email,
         password: createUserForm.password,
         nome: createUserForm.nome,
         whatsapp: createUserForm.whatsapp,
@@ -285,22 +306,59 @@ const Admin = () => {
     finally { setSavingSignup(false); }
   };
 
+  const handleAddPlaylist = () => {
+    if (!newPlaylistName.trim()) return;
+    const newPlaylist: TutorialPlaylist = {
+      id: Date.now().toString(),
+      name: newPlaylistName.trim(),
+      videos: [],
+    };
+    setTutorialConfig(prev => ({ playlists: [...(prev.playlists || []), newPlaylist] }));
+    setActivePlaylistId(newPlaylist.id);
+    setNewPlaylistName("");
+  };
+
+  const handleRenamePlaylist = (id: string, name: string) => {
+    setTutorialConfig(prev => ({
+      playlists: (prev.playlists || []).map(p => p.id === id ? { ...p, name } : p),
+    }));
+    setEditPlaylistId(null);
+  };
+
+  const handleDeletePlaylist = (id: string) => {
+    setTutorialConfig(prev => {
+      const playlists = (prev.playlists || []).filter(p => p.id !== id);
+      if (activePlaylistId === id) setActivePlaylistId(playlists[0]?.id || null);
+      return { playlists };
+    });
+  };
+
   const handleAddTutorialVideo = () => {
-    if (!newVideoTitle.trim() || !newVideoUrl.trim()) return;
+    if (!newVideoTitle.trim() || !newVideoUrl.trim() || !activePlaylistId) return;
     const newVideo: TutorialVideo = {
       id: Date.now().toString(),
       title: newVideoTitle.trim(),
       url: newVideoUrl.trim(),
-      order: tutorialConfig.videos.length,
+      order: 0,
     };
-    setTutorialConfig(prev => ({ videos: [...prev.videos, newVideo] }));
+    setTutorialConfig(prev => ({
+      playlists: (prev.playlists || []).map(p =>
+        p.id === activePlaylistId
+          ? { ...p, videos: [...p.videos, { ...newVideo, order: p.videos.length }] }
+          : p
+      ),
+    }));
     setNewVideoTitle("");
     setNewVideoUrl("");
   };
 
-  const handleRemoveTutorialVideo = (id: string) => {
+  const handleRemoveTutorialVideo = (videoId: string) => {
     setTutorialConfig(prev => ({
-      videos: prev.videos.filter(v => v.id !== id).map((v, i) => ({ ...v, order: i })),
+      playlists: (prev.playlists || []).map(p =>
+        p.id === activePlaylistId
+          ? { ...p, videos: p.videos.filter(v => v.id !== videoId).map((v, i) => ({ ...v, order: i })) }
+          : p
+      ),
     }));
   };
 
@@ -312,6 +370,9 @@ const Admin = () => {
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
     finally { setSavingTutorial(false); }
   };
+
+  const activePlaylist = (tutorialConfig.playlists || []).find(p => p.id === activePlaylistId);
+  const totalVideos = (tutorialConfig.playlists || []).reduce((sum, p) => sum + p.videos.length, 0);
 
   const filteredUsers = users.filter(u =>
     u.nome.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -635,85 +696,131 @@ const Admin = () => {
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Área de Tutoriais</h1>
-                  <p className="text-sm text-muted-foreground">Gerencie a playlist de vídeos da área de membros</p>
+                  <p className="text-sm text-muted-foreground">Gerencie suas playlists e vídeos da área de membros</p>
                 </div>
                 <div className="flex items-center gap-2 bg-muted/60 rounded-full px-3 py-1.5">
                   <Video className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-medium text-muted-foreground">{tutorialConfig.videos.length} vídeo(s)</span>
+                  <span className="text-xs font-medium text-muted-foreground">{(tutorialConfig.playlists || []).length} playlist(s) · {totalVideos} vídeo(s)</span>
                 </div>
               </div>
 
-              {/* Add Video Form */}
-              <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-4">
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Plus className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-semibold text-foreground">Adicionar Vídeo</h3>
-                    <p className="text-xs text-muted-foreground">Cole o link do YouTube e defina o título da aula</p>
-                  </div>
+              {/* Create Playlist */}
+              <div className="bg-card rounded-2xl p-5 border border-border shadow-card space-y-3">
+                <h3 className="font-display font-semibold text-foreground text-sm">Criar nova Playlist</h3>
+                <div className="flex gap-2">
+                  <Input value={newPlaylistName} onChange={(e) => setNewPlaylistName(e.target.value)} placeholder="Nome da playlist (ex: Módulo 1 - Introdução)" className="flex-1" onKeyDown={(e) => e.key === "Enter" && handleAddPlaylist()} />
+                  <Button onClick={handleAddPlaylist} variant="outline" className="gap-2 flex-shrink-0"><Plus className="w-4 h-4" /> Criar</Button>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div><Label>Título da aula</Label><Input value={newVideoTitle} onChange={(e) => setNewVideoTitle(e.target.value)} placeholder="Ex: Como cadastrar um banco" className="mt-1" /></div>
-                  <div><Label>URL do YouTube</Label><Input value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="mt-1" /></div>
-                </div>
-                {/* Preview */}
-                {newVideoUrl && extractYouTubeId(newVideoUrl) && (
-                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
-                    <img src={`https://img.youtube.com/vi/${extractYouTubeId(newVideoUrl)}/mqdefault.jpg`} alt="Preview" className="w-24 h-14 rounded-lg object-cover" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{newVideoTitle || "Sem título"}</p>
-                      <p className="text-[10px] text-muted-foreground">Pré-visualização do vídeo</p>
-                    </div>
-                  </div>
-                )}
-                <Button onClick={handleAddTutorialVideo} variant="outline" className="gap-2 w-fit"><Plus className="w-4 h-4" /> Adicionar à playlist</Button>
               </div>
 
-              {/* Video Playlist */}
-              {tutorialConfig.videos.length > 0 && (
-                <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
-                  <div className="p-4 border-b border-border flex items-center gap-2">
-                    <PlayCircle className="w-4 h-4 text-primary" />
-                    <h3 className="font-display font-semibold text-foreground text-sm">Playlist de Aulas</h3>
-                    <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">
-                      {tutorialConfig.videos.length} aula(s)
-                    </span>
-                  </div>
-                  <div className="divide-y divide-border">
-                    {tutorialConfig.videos.map((video, idx) => {
-                      const ytId = extractYouTubeId(video.url);
-                      return (
-                        <div key={video.id} className="flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors group">
-                          <span className="text-xs font-bold text-muted-foreground w-6 text-center flex-shrink-0">{idx + 1}</span>
-                          {/* Thumbnail */}
-                          <div className="w-24 h-14 rounded-lg overflow-hidden flex-shrink-0 relative bg-muted">
-                            {ytId ? (
-                              <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={video.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center"><Image className="w-5 h-5 text-muted-foreground/40" /></div>
-                            )}
-                            <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
-                              <PlayCircle className="w-5 h-5 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
-                            </div>
+              {/* Playlists Grid */}
+              {(tutorialConfig.playlists || []).length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {(tutorialConfig.playlists || []).map((pl) => {
+                    const isActive = activePlaylistId === pl.id;
+                    const firstYtId = pl.videos[0] ? extractYouTubeId(pl.videos[0].url) : null;
+                    return (
+                      <button
+                        key={pl.id}
+                        onClick={() => setActivePlaylistId(pl.id)}
+                        className={`relative rounded-2xl border overflow-hidden text-left transition-all ${isActive ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/30"}`}
+                      >
+                        {/* Thumbnail */}
+                        <div className="w-full h-24 bg-muted relative">
+                          {firstYtId ? (
+                            <img src={`https://img.youtube.com/vi/${firstYtId}/mqdefault.jpg`} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><Video className="w-8 h-8 text-muted-foreground/30" /></div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
+                          <div className="absolute bottom-2 left-3 right-3">
+                            <p className="text-xs font-bold text-white truncate">{pl.name}</p>
+                            <p className="text-[10px] text-white/70">{pl.videos.length} vídeo(s)</p>
                           </div>
-                          {/* Info */}
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-foreground truncate">{video.title}</p>
-                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{video.url}</p>
-                          </div>
-                          {/* Remove */}
-                          <button onClick={() => handleRemoveTutorialVideo(video.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
-              <Button onClick={handleSaveTutorial} disabled={savingTutorial} className="w-full gradient-primary text-primary-foreground">{savingTutorial ? "Salvando..." : "Salvar Playlist"}</Button>
+
+              {/* Active Playlist Detail */}
+              {activePlaylist && (
+                <div className="space-y-4">
+                  {/* Playlist Header */}
+                  <div className="bg-card rounded-2xl p-5 border border-border shadow-card">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      {editPlaylistId === activePlaylist.id ? (
+                        <div className="flex gap-2 flex-1">
+                          <Input value={editPlaylistName} onChange={(e) => setEditPlaylistName(e.target.value)} className="flex-1" onKeyDown={(e) => e.key === "Enter" && handleRenamePlaylist(activePlaylist.id, editPlaylistName)} />
+                          <Button size="sm" onClick={() => handleRenamePlaylist(activePlaylist.id, editPlaylistName)}>Salvar</Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <PlayCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                          <h3 className="font-display font-bold text-foreground text-lg truncate">{activePlaylist.name}</h3>
+                          <button onClick={() => { setEditPlaylistId(activePlaylist.id); setEditPlaylistName(activePlaylist.name); }} className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"><Pencil className="w-3.5 h-3.5" /></button>
+                        </div>
+                      )}
+                      <button onClick={() => handleDeletePlaylist(activePlaylist.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0" title="Excluir playlist"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+
+                    {/* Add Video to this Playlist */}
+                    <div className="space-y-3 border-t border-border pt-4">
+                      <p className="text-xs font-medium text-muted-foreground">Adicionar vídeo a esta playlist</p>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div><Label className="text-xs">Título da aula</Label><Input value={newVideoTitle} onChange={(e) => setNewVideoTitle(e.target.value)} placeholder="Ex: Como cadastrar um banco" className="mt-1" /></div>
+                        <div><Label className="text-xs">URL do YouTube</Label><Input value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="mt-1" /></div>
+                      </div>
+                      {newVideoUrl && extractYouTubeId(newVideoUrl) && (
+                        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
+                          <img src={`https://img.youtube.com/vi/${extractYouTubeId(newVideoUrl)}/mqdefault.jpg`} alt="Preview" className="w-24 h-14 rounded-lg object-cover" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{newVideoTitle || "Sem título"}</p>
+                            <p className="text-[10px] text-muted-foreground">Pré-visualização</p>
+                          </div>
+                        </div>
+                      )}
+                      <Button onClick={handleAddTutorialVideo} variant="outline" size="sm" className="gap-2"><Plus className="w-4 h-4" /> Adicionar vídeo</Button>
+                    </div>
+                  </div>
+
+                  {/* Videos List */}
+                  {activePlaylist.videos.length > 0 && (
+                    <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+                      <div className="p-4 border-b border-border flex items-center gap-2">
+                        <PlayCircle className="w-4 h-4 text-primary" />
+                        <h3 className="font-display font-semibold text-foreground text-sm">Vídeos da Playlist</h3>
+                        <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">{activePlaylist.videos.length} aula(s)</span>
+                      </div>
+                      <div className="divide-y divide-border">
+                        {activePlaylist.videos.map((video, idx) => {
+                          const ytId = extractYouTubeId(video.url);
+                          return (
+                            <div key={video.id} className="flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors group">
+                              <span className="text-xs font-bold text-muted-foreground w-6 text-center flex-shrink-0">{idx + 1}</span>
+                              <div className="w-24 h-14 rounded-lg overflow-hidden flex-shrink-0 relative bg-muted">
+                                {ytId ? (
+                                  <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={video.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center"><Image className="w-5 h-5 text-muted-foreground/40" /></div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-foreground truncate">{video.title}</p>
+                                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{video.url}</p>
+                              </div>
+                              <button onClick={() => handleRemoveTutorialVideo(video.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"><Trash2 className="w-3.5 h-3.5" /></button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Button onClick={handleSaveTutorial} disabled={savingTutorial} className="w-full gradient-primary text-primary-foreground">{savingTutorial ? "Salvando..." : "Salvar Tudo"}</Button>
             </>
           )}
 
@@ -767,12 +874,27 @@ const Admin = () => {
       {/* Create User Dialog */}
       <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Adicionar Usuário</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Adicionar Usuário</DialogTitle>
+          </DialogHeader>
           <div className="grid gap-4 py-2">
-            <div><Label>Nome</Label><Input value={createUserForm.nome} onChange={(e) => setCreateUserForm({ ...createUserForm, nome: e.target.value })} placeholder="Nome do usuário" /></div>
-            <div><Label>E-mail *</Label><Input type="email" value={createUserForm.email} onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })} placeholder="email@exemplo.com" /></div>
-            <div><Label>Senha *</Label><Input type="password" value={createUserForm.password} onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })} placeholder="Mínimo 6 caracteres" /></div>
-            <div><Label>WhatsApp</Label><Input value={createUserForm.whatsapp} onChange={(e) => setCreateUserForm({ ...createUserForm, whatsapp: e.target.value })} placeholder="(11) 99999-9999" /></div>
+            <p className="text-xs text-muted-foreground -mt-1">Informe pelo menos o <strong>nome de usuário</strong> ou o <strong>e-mail</strong>. A senha é obrigatória.</p>
+            <div>
+              <Label>Nome de usuário</Label>
+              <Input value={createUserForm.nome} onChange={(e) => setCreateUserForm({ ...createUserForm, nome: e.target.value })} placeholder="Ex: João Silva" className="mt-1" />
+            </div>
+            <div>
+              <Label>E-mail <span className="text-muted-foreground font-normal">(opcional se informar o nome)</span></Label>
+              <Input type="email" value={createUserForm.email} onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })} placeholder="email@exemplo.com" className="mt-1" />
+            </div>
+            <div>
+              <Label>Senha <span className="text-destructive text-xs">*</span></Label>
+              <Input type="password" value={createUserForm.password} onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })} placeholder="Mínimo 6 caracteres" className="mt-1" />
+            </div>
+            <div>
+              <Label>WhatsApp <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+              <Input value={createUserForm.whatsapp} onChange={(e) => setCreateUserForm({ ...createUserForm, whatsapp: e.target.value })} placeholder="(11) 99999-9999" className="mt-1" />
+            </div>
             <Button onClick={handleCreateUser} disabled={creatingUser} className="gradient-primary text-primary-foreground">{creatingUser ? "Criando..." : "Criar Usuário"}</Button>
           </div>
         </DialogContent>
