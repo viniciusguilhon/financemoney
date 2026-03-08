@@ -166,6 +166,20 @@ Deno.serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        if (action === "create") {
+          const { email, password, nome, whatsapp } = body;
+          if (!email || !password) throw new Error("Email e senha são obrigatórios");
+          const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { nome: nome || "", whatsapp: whatsapp || "" },
+          });
+          if (createError) throw createError;
+          return new Response(JSON.stringify({ success: true, user: { id: newUser.user.id, email } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
 
       // Handle settings updates

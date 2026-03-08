@@ -3,7 +3,7 @@ import {
   Eye, EyeOff, Plus, Trash2, Upload, Lock, CreditCard, Building2, MessageCircle,
   Settings, Users, User, Phone, Mail, LayoutDashboard, Pencil, Ban, ShieldCheck,
   KeyRound, Search, ChevronLeft, ChevronRight, UserPlus, UserX, Activity,
-  PlayCircle, Video,
+  PlayCircle, Video, GripVertical, Image,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import MoneyLogo from "@/components/MoneyLogo";
 
 interface BankTemplate { id: string; nome: string; logo_url: string | null; cor: string; abbr: string; }
 interface CardTemplate { id: string; nome: string; image_url: string | null; bandeira: string; }
@@ -27,6 +28,11 @@ interface UserProfile {
 interface DashboardStats { totalUsers: number; newThisMonth: number; activeToday: number; bannedCount: number; }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+
+const extractYouTubeId = (url: string): string | null => {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/);
+  return match ? match[1] : null;
+};
 
 const Admin = () => {
   const [authenticated, setAuthenticated] = useState(false);
@@ -70,6 +76,10 @@ const Admin = () => {
   const [savingTutorial, setSavingTutorial] = useState(false);
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
+
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({ email: "", password: "", nome: "", whatsapp: "" });
+  const [creatingUser, setCreatingUser] = useState(false);
 
   const bandeiras = ["Mastercard", "Visa", "Elo", "Amex", "Hipercard"];
 
@@ -237,6 +247,35 @@ const Admin = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleCreateUser = async () => {
+    if (!createUserForm.email || !createUserForm.password) {
+      toast({ title: "E-mail e senha são obrigatórios", variant: "destructive" });
+      return;
+    }
+    if (createUserForm.password.length < 6) {
+      toast({ title: "A senha deve ter pelo menos 6 caracteres", variant: "destructive" });
+      return;
+    }
+    try {
+      setCreatingUser(true);
+      await adminFetch("POST", "users", {
+        action: "create",
+        email: createUserForm.email,
+        password: createUserForm.password,
+        nome: createUserForm.nome,
+        whatsapp: createUserForm.whatsapp,
+      });
+      toast({ title: "Usuário criado com sucesso!" });
+      setCreateUserOpen(false);
+      setCreateUserForm({ email: "", password: "", nome: "", whatsapp: "" });
+      await loadData(adminPassword);
+    } catch (err: any) {
+      toast({ title: err.message || "Erro ao criar usuário", variant: "destructive" });
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
   const handleToggleSignup = async () => {
     try {
       setSavingSignup(true);
@@ -293,12 +332,14 @@ const Admin = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="bg-card rounded-2xl p-8 shadow-elevated border border-border w-full max-w-sm space-y-6">
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-primary" />
+          <div className="text-center space-y-3">
+            <div className="flex justify-center">
+              <MoneyLogo size="lg" />
             </div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Painel Admin</h1>
-            <p className="text-sm text-muted-foreground mt-1">Digite a senha de administrador</p>
+            <div>
+              <h1 className="text-xl font-display font-bold text-foreground">Painel Administrativo</h1>
+              <p className="text-sm text-muted-foreground mt-1">Digite a senha de administrador</p>
+            </div>
           </div>
           <div className="space-y-4">
             <div className="relative">
@@ -321,7 +362,8 @@ const Admin = () => {
       {/* Sidebar */}
       <aside className={`${sidebarCollapsed ? "w-16" : "w-60"} bg-card border-r border-border flex flex-col transition-all duration-300 flex-shrink-0`}>
         <div className="p-4 flex items-center justify-between border-b border-border">
-          {!sidebarCollapsed && <h2 className="font-display font-bold text-foreground text-lg">Admin</h2>}
+          {!sidebarCollapsed && <MoneyLogo size="sm" />}
+          {sidebarCollapsed && <div className="w-full flex justify-center"><MoneyLogo size="sm" hideText /></div>}
           <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
             {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -400,11 +442,14 @@ const Admin = () => {
           {/* Users */}
           {activeSection === "users" && (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Usuários</h1>
                   <p className="text-sm text-muted-foreground">{users.length} usuário(s) cadastrado(s)</p>
                 </div>
+                <Button onClick={() => setCreateUserOpen(true)} className="gradient-primary text-primary-foreground gap-2">
+                  <UserPlus className="w-4 h-4" /> Adicionar Usuário
+                </Button>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -587,39 +632,88 @@ const Admin = () => {
           {/* Tutorials */}
           {activeSection === "tutorials" && (
             <>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Tutoriais</h1>
-                <p className="text-sm text-muted-foreground">Gerencie os vídeos tutoriais do YouTube</p>
-              </div>
-              <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-5">
-                <h3 className="font-display font-semibold text-foreground">Adicionar Vídeo</h3>
-                <div className="grid gap-3">
-                  <div><Label>Título do vídeo</Label><Input value={newVideoTitle} onChange={(e) => setNewVideoTitle(e.target.value)} placeholder="Ex: Como cadastrar um banco" className="mt-1" /></div>
-                  <div><Label>URL do YouTube</Label><Input value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="mt-1" /></div>
-                  <Button onClick={handleAddTutorialVideo} variant="outline" className="gap-2 w-fit"><Plus className="w-4 h-4" /> Adicionar à lista</Button>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Área de Tutoriais</h1>
+                  <p className="text-sm text-muted-foreground">Gerencie a playlist de vídeos da área de membros</p>
+                </div>
+                <div className="flex items-center gap-2 bg-muted/60 rounded-full px-3 py-1.5">
+                  <Video className="w-4 h-4 text-primary" />
+                  <span className="text-xs font-medium text-muted-foreground">{tutorialConfig.videos.length} vídeo(s)</span>
                 </div>
               </div>
+
+              {/* Add Video Form */}
+              <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-4">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-semibold text-foreground">Adicionar Vídeo</h3>
+                    <p className="text-xs text-muted-foreground">Cole o link do YouTube e defina o título da aula</p>
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div><Label>Título da aula</Label><Input value={newVideoTitle} onChange={(e) => setNewVideoTitle(e.target.value)} placeholder="Ex: Como cadastrar um banco" className="mt-1" /></div>
+                  <div><Label>URL do YouTube</Label><Input value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="mt-1" /></div>
+                </div>
+                {/* Preview */}
+                {newVideoUrl && extractYouTubeId(newVideoUrl) && (
+                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
+                    <img src={`https://img.youtube.com/vi/${extractYouTubeId(newVideoUrl)}/mqdefault.jpg`} alt="Preview" className="w-24 h-14 rounded-lg object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{newVideoTitle || "Sem título"}</p>
+                      <p className="text-[10px] text-muted-foreground">Pré-visualização do vídeo</p>
+                    </div>
+                  </div>
+                )}
+                <Button onClick={handleAddTutorialVideo} variant="outline" className="gap-2 w-fit"><Plus className="w-4 h-4" /> Adicionar à playlist</Button>
+              </div>
+
+              {/* Video Playlist */}
               {tutorialConfig.videos.length > 0 && (
                 <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
-                  <div className="p-4 border-b border-border">
-                    <h3 className="font-display font-semibold text-foreground text-sm">Vídeos ({tutorialConfig.videos.length})</h3>
+                  <div className="p-4 border-b border-border flex items-center gap-2">
+                    <PlayCircle className="w-4 h-4 text-primary" />
+                    <h3 className="font-display font-semibold text-foreground text-sm">Playlist de Aulas</h3>
+                    <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+                      {tutorialConfig.videos.length} aula(s)
+                    </span>
                   </div>
                   <div className="divide-y divide-border">
-                    {tutorialConfig.videos.map((video, idx) => (
-                      <div key={video.id} className="flex items-center gap-3 p-3">
-                        <span className="text-xs text-muted-foreground w-6 text-center">{idx + 1}</span>
-                        <PlayCircle className="w-4 h-4 text-primary flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-foreground truncate">{video.title}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{video.url}</p>
+                    {tutorialConfig.videos.map((video, idx) => {
+                      const ytId = extractYouTubeId(video.url);
+                      return (
+                        <div key={video.id} className="flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors group">
+                          <span className="text-xs font-bold text-muted-foreground w-6 text-center flex-shrink-0">{idx + 1}</span>
+                          {/* Thumbnail */}
+                          <div className="w-24 h-14 rounded-lg overflow-hidden flex-shrink-0 relative bg-muted">
+                            {ytId ? (
+                              <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={video.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center"><Image className="w-5 h-5 text-muted-foreground/40" /></div>
+                            )}
+                            <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
+                              <PlayCircle className="w-5 h-5 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" />
+                            </div>
+                          </div>
+                          {/* Info */}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground truncate">{video.title}</p>
+                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{video.url}</p>
+                          </div>
+                          {/* Remove */}
+                          <button onClick={() => handleRemoveTutorialVideo(video.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        <button onClick={() => handleRemoveTutorialVideo(video.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
-              <Button onClick={handleSaveTutorial} disabled={savingTutorial} className="w-full gradient-primary text-primary-foreground">{savingTutorial ? "Salvando..." : "Salvar Tutoriais"}</Button>
+              <Button onClick={handleSaveTutorial} disabled={savingTutorial} className="w-full gradient-primary text-primary-foreground">{savingTutorial ? "Salvando..." : "Salvar Playlist"}</Button>
             </>
           )}
 
@@ -669,6 +763,20 @@ const Admin = () => {
           )}
         </div>
       </main>
+
+      {/* Create User Dialog */}
+      <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Adicionar Usuário</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div><Label>Nome</Label><Input value={createUserForm.nome} onChange={(e) => setCreateUserForm({ ...createUserForm, nome: e.target.value })} placeholder="Nome do usuário" /></div>
+            <div><Label>E-mail *</Label><Input type="email" value={createUserForm.email} onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })} placeholder="email@exemplo.com" /></div>
+            <div><Label>Senha *</Label><Input type="password" value={createUserForm.password} onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })} placeholder="Mínimo 6 caracteres" /></div>
+            <div><Label>WhatsApp</Label><Input value={createUserForm.whatsapp} onChange={(e) => setCreateUserForm({ ...createUserForm, whatsapp: e.target.value })} placeholder="(11) 99999-9999" /></div>
+            <Button onClick={handleCreateUser} disabled={creatingUser} className="gradient-primary text-primary-foreground">{creatingUser ? "Criando..." : "Criar Usuário"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit User Dialog */}
       <Dialog open={editUserOpen} onOpenChange={setEditUserOpen}>
