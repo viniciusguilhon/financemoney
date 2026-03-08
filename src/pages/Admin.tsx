@@ -247,6 +247,35 @@ const Admin = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleCreateUser = async () => {
+    if (!createUserForm.email || !createUserForm.password) {
+      toast({ title: "E-mail e senha são obrigatórios", variant: "destructive" });
+      return;
+    }
+    if (createUserForm.password.length < 6) {
+      toast({ title: "A senha deve ter pelo menos 6 caracteres", variant: "destructive" });
+      return;
+    }
+    try {
+      setCreatingUser(true);
+      await adminFetch("POST", "users", {
+        action: "create",
+        email: createUserForm.email,
+        password: createUserForm.password,
+        nome: createUserForm.nome,
+        whatsapp: createUserForm.whatsapp,
+      });
+      toast({ title: "Usuário criado com sucesso!" });
+      setCreateUserOpen(false);
+      setCreateUserForm({ email: "", password: "", nome: "", whatsapp: "" });
+      await loadData(adminPassword);
+    } catch (err: any) {
+      toast({ title: err.message || "Erro ao criar usuário", variant: "destructive" });
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
   const handleToggleSignup = async () => {
     try {
       setSavingSignup(true);
