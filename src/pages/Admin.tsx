@@ -332,12 +332,14 @@ const Admin = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="bg-card rounded-2xl p-8 shadow-elevated border border-border w-full max-w-sm space-y-6">
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-primary" />
+          <div className="text-center space-y-3">
+            <div className="flex justify-center">
+              <MoneyLogo size="lg" />
             </div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Painel Admin</h1>
-            <p className="text-sm text-muted-foreground mt-1">Digite a senha de administrador</p>
+            <div>
+              <h1 className="text-xl font-display font-bold text-foreground">Painel Administrativo</h1>
+              <p className="text-sm text-muted-foreground mt-1">Digite a senha de administrador</p>
+            </div>
           </div>
           <div className="space-y-4">
             <div className="relative">
