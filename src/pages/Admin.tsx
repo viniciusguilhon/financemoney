@@ -72,6 +72,10 @@ const Admin = () => {
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
 
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({ email: "", password: "", nome: "", whatsapp: "" });
+  const [creatingUser, setCreatingUser] = useState(false);
+
   const bandeiras = ["Mastercard", "Visa", "Elo", "Amex", "Hipercard"];
 
   const adminFetch = async (method: string, type: string, body?: any) => {
