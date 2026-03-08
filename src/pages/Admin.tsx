@@ -874,12 +874,27 @@ const Admin = () => {
       {/* Create User Dialog */}
       <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Adicionar Usuário</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Adicionar Usuário</DialogTitle>
+          </DialogHeader>
           <div className="grid gap-4 py-2">
-            <div><Label>Nome</Label><Input value={createUserForm.nome} onChange={(e) => setCreateUserForm({ ...createUserForm, nome: e.target.value })} placeholder="Nome do usuário" /></div>
-            <div><Label>E-mail *</Label><Input type="email" value={createUserForm.email} onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })} placeholder="email@exemplo.com" /></div>
-            <div><Label>Senha *</Label><Input type="password" value={createUserForm.password} onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })} placeholder="Mínimo 6 caracteres" /></div>
-            <div><Label>WhatsApp</Label><Input value={createUserForm.whatsapp} onChange={(e) => setCreateUserForm({ ...createUserForm, whatsapp: e.target.value })} placeholder="(11) 99999-9999" /></div>
+            <p className="text-xs text-muted-foreground -mt-1">Informe pelo menos o <strong>nome de usuário</strong> ou o <strong>e-mail</strong>. A senha é obrigatória.</p>
+            <div>
+              <Label>Nome de usuário</Label>
+              <Input value={createUserForm.nome} onChange={(e) => setCreateUserForm({ ...createUserForm, nome: e.target.value })} placeholder="Ex: João Silva" className="mt-1" />
+            </div>
+            <div>
+              <Label>E-mail <span className="text-muted-foreground font-normal">(opcional se informar o nome)</span></Label>
+              <Input type="email" value={createUserForm.email} onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })} placeholder="email@exemplo.com" className="mt-1" />
+            </div>
+            <div>
+              <Label>Senha <span className="text-destructive text-xs">*</span></Label>
+              <Input type="password" value={createUserForm.password} onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })} placeholder="Mínimo 6 caracteres" className="mt-1" />
+            </div>
+            <div>
+              <Label>WhatsApp <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+              <Input value={createUserForm.whatsapp} onChange={(e) => setCreateUserForm({ ...createUserForm, whatsapp: e.target.value })} placeholder="(11) 99999-9999" className="mt-1" />
+            </div>
             <Button onClick={handleCreateUser} disabled={creatingUser} className="gradient-primary text-primary-foreground">{creatingUser ? "Criando..." : "Criar Usuário"}</Button>
           </div>
         </DialogContent>
