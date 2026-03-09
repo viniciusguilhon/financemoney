@@ -143,7 +143,7 @@ const Bancos = () => {
                 <button onClick={() => setDeleteId(bank.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
               <div className="flex items-center gap-3 mb-4">
-                <BankLogo bank={bank} size={44} />
+                <BankLogo bank={bank} templates={templates} size={44} />
                 <div>
                   <span className="font-semibold text-foreground text-sm">{bank.nome}</span>
                 </div>
