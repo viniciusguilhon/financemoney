@@ -492,7 +492,7 @@ const Admin = () => {
     );
   }
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
