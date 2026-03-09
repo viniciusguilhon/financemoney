@@ -657,6 +657,24 @@ const Lancamentos = () => {
                         <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 truncate">{goal.descricao}</p>
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => {
+                            const isCompleted = goal.valorAtual >= goal.valorAlvo && goal.valorAlvo > 0;
+                            if (isCompleted) {
+                              updateSavingsGoal(goal.id, { valorAtual: 0 });
+                            } else {
+                              updateSavingsGoal(goal.id, { valorAtual: goal.valorAlvo });
+                            }
+                          }}
+                          className={`p-1 md:p-1.5 rounded-lg transition-colors ${
+                            goal.valorAtual >= goal.valorAlvo && goal.valorAlvo > 0
+                              ? "bg-primary/15 text-primary hover:bg-primary/25"
+                              : "hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                          }`}
+                          title={goal.valorAtual >= goal.valorAlvo && goal.valorAlvo > 0 ? "Desmarcar meta" : "Marcar como concluída"}
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
                         <button onClick={() => openEditGoal(goal)} className="p-1 md:p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
                         <button onClick={() => setDeleteGoalId(goal.id)} className="p-1 md:p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
