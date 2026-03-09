@@ -492,10 +492,82 @@ const Admin = () => {
     );
   }
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside className={`${sidebarCollapsed ? "w-16" : "w-60"} bg-card border-r border-border flex flex-col transition-all duration-300 flex-shrink-0`}>
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Mobile Header */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border flex items-center justify-between px-3 z-40">
+        <MoneyLogo size="sm" />
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-muted-foreground hover:text-foreground"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-30 bg-foreground/50" onClick={() => setMobileMenuOpen(false)}>
+          <div
+            className="absolute top-14 left-0 right-0 bg-card border-b border-border p-3 space-y-1 animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => { setActiveSection(item.id); setMobileMenuOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors ${
+                  activeSection === item.id
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <span>{item.label}</span>
+              </button>
+            ))}
+            <button
+              onClick={() => { setAuthenticated(false); setAdminPassword(""); setPassword(""); setMobileMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <Lock className="w-5 h-5 flex-shrink-0" />
+              <span>Sair</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Bottom Nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 flex justify-around py-1.5 px-1">
+        {navItems.slice(0, 5).map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveSection(item.id)}
+            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[9px] font-medium transition-colors ${
+              activeSection === item.id ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            <item.icon className={`w-5 h-5 ${activeSection === item.id ? "text-primary" : ""}`} />
+            {item.label.length > 8 ? item.label.slice(0, 7) + "…" : item.label}
+          </button>
+        ))}
+        <button
+          onClick={() => setActiveSection("settings")}
+          className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[9px] font-medium transition-colors ${
+            activeSection === "settings" ? "text-primary" : "text-muted-foreground"
+          }`}
+        >
+          <Settings className={`w-5 h-5 ${activeSection === "settings" ? "text-primary" : ""}`} />
+          Config
+        </button>
+      </nav>
+
+      {/* Desktop Sidebar */}
+      <aside className={`hidden md:flex ${sidebarCollapsed ? "w-16" : "w-60"} bg-card border-r border-border flex-col transition-all duration-300 flex-shrink-0`}>
         <div className="p-4 flex items-center justify-between border-b border-border">
           {!sidebarCollapsed && <MoneyLogo size="sm" />}
           {sidebarCollapsed && <div className="w-full flex justify-center"><MoneyLogo size="sm" hideText /></div>}
@@ -531,7 +603,7 @@ const Admin = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+      <main className="flex-1 overflow-y-auto pt-16 pb-16 md:pt-0 md:pb-0 p-3 md:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
 
           {/* Dashboard */}
