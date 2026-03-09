@@ -119,6 +119,23 @@ const Admin = () => {
   const [customLogoPreview, setCustomLogoPreview] = useState("");
   const customLogoRef = useRef<HTMLInputElement>(null);
 
+  // Collaborators state
+  interface Collaborator { id: string; email: string; nome: string; permissions: string[]; created_at: string; }
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [collabDialogOpen, setCollabDialogOpen] = useState(false);
+  const [collabForm, setCollabForm] = useState({ email: "", nome: "", permissions: [] as string[] });
+  const [savingCollab, setSavingCollab] = useState(false);
+  const [editCollabId, setEditCollabId] = useState<string | null>(null);
+
+  const availablePermissions = [
+    { key: "users", label: "Gerenciar Usuários", icon: Users },
+    { key: "banks", label: "Gerenciar Bancos", icon: Building2 },
+    { key: "cards", label: "Gerenciar Cartões", icon: CreditCard },
+    { key: "tutorials", label: "Gerenciar Tutoriais", icon: Video },
+    { key: "settings", label: "Configurações", icon: Settings },
+    { key: "dashboard", label: "Ver Dashboard", icon: LayoutDashboard },
+  ];
+
   const bandeiras = ["Mastercard", "Visa", "Elo", "Amex", "Hipercard"];
 
   const adminFetch = async (method: string, type: string, body?: any) => {
