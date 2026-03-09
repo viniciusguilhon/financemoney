@@ -467,34 +467,238 @@ const Admin = () => {
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Dashboard</h1>
                 <p className="text-sm text-muted-foreground">Visão geral do sistema</p>
               </div>
+
+              {/* Stat Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <StatCard icon={<Users className="w-5 h-5" />} label="Total de Usuários" value={stats.totalUsers} gradient="from-blue-500 to-blue-700" />
                 <StatCard icon={<UserPlus className="w-5 h-5" />} label="Novos este mês" value={stats.newThisMonth} gradient="from-emerald-500 to-emerald-700" />
                 <StatCard icon={<Activity className="w-5 h-5" />} label="Ativos hoje" value={stats.activeToday} gradient="from-amber-500 to-orange-600" />
                 <StatCard icon={<UserX className="w-5 h-5" />} label="Bloqueados" value={stats.bannedCount} gradient="from-red-500 to-red-700" />
               </div>
-              <div className="bg-card rounded-2xl p-5 border border-border shadow-card">
-                <h3 className="font-display font-semibold text-foreground mb-4">Últimos Usuários Cadastrados</h3>
-                <div className="space-y-3">
-                  {users.slice(0, 5).map((u) => (
-                    <div key={u.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        {u.avatar_url ? (
-                          <img src={u.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center"><User className="w-4 h-4 text-primary" /></div>
-                        )}
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{u.nome || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground">{u.email}</p>
-                        </div>
+
+              {/* Quick Actions + System Overview */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Quick Actions */}
+                <div className="bg-card rounded-2xl p-5 border border-border shadow-card">
+                  <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-primary" /> Ações Rápidas
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setActiveSection("users")}
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/50 hover:bg-primary/10 transition-colors group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                        <Users className="w-5 h-5 text-blue-500" />
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString("pt-BR")}</p>
-                        {u.banned && <span className="text-[10px] text-destructive font-medium">Bloqueado</span>}
+                      <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">Gerenciar Usuários</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveSection("banks")}
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/50 hover:bg-primary/10 transition-colors group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                        <Building2 className="w-5 h-5 text-emerald-500" />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">Bancos</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveSection("cards")}
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/50 hover:bg-primary/10 transition-colors group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                        <CreditCard className="w-5 h-5 text-purple-500" />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">Cartões</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveSection("settings")}
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/50 hover:bg-primary/10 transition-colors group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                        <Settings className="w-5 h-5 text-amber-500" />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">Configurações</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* System Status */}
+                <div className="bg-card rounded-2xl p-5 border border-border shadow-card lg:col-span-2">
+                  <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-primary" /> Status do Sistema
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Building2 className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-[11px] text-muted-foreground">Bancos</span>
+                      </div>
+                      <p className="text-xl font-display font-bold text-foreground">{bankTemplates.length}</p>
+                      <p className="text-[10px] text-muted-foreground">templates cadastrados</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CreditCard className="w-3.5 h-3.5 text-purple-500" />
+                        <span className="text-[11px] text-muted-foreground">Cartões</span>
+                      </div>
+                      <p className="text-xl font-display font-bold text-foreground">{cardTemplates.length}</p>
+                      <p className="text-[10px] text-muted-foreground">templates cadastrados</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Video className="w-3.5 h-3.5 text-red-500" />
+                        <span className="text-[11px] text-muted-foreground">Tutoriais</span>
+                      </div>
+                      <p className="text-xl font-display font-bold text-foreground">{totalVideos}</p>
+                      <p className="text-[10px] text-muted-foreground">vídeos em {(tutorialConfig.playlists || []).length} playlist(s)</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MessageCircle className="w-3.5 h-3.5 text-green-500" />
+                        <span className="text-[11px] text-muted-foreground">Suporte WhatsApp</span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground mt-1">
+                        {whatsappConfig.enabled ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium bg-accent text-accent-foreground px-2 py-0.5 rounded-full">
+                            <ShieldCheck className="w-3 h-3" /> Ativo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full">Inativo</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Lock className="w-3.5 h-3.5 text-amber-500" />
+                        <span className="text-[11px] text-muted-foreground">Cadastro</span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground mt-1">
+                        {signupDisabled ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">
+                            <Ban className="w-3 h-3" /> Desativado
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium bg-accent text-accent-foreground px-2 py-0.5 rounded-full">
+                            <ShieldCheck className="w-3 h-3" /> Ativo
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Activity className="w-3.5 h-3.5 text-blue-500" />
+                        <span className="text-[11px] text-muted-foreground">Taxa de Atividade</span>
+                      </div>
+                      <p className="text-xl font-display font-bold text-foreground">
+                        {stats.totalUsers > 0 ? Math.round((stats.activeToday / stats.totalUsers) * 100) : 0}%
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">usuários ativos hoje</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Users Growth Bar + Recent Users */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* User Distribution */}
+                <div className="bg-card rounded-2xl p-5 border border-border shadow-card">
+                  <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" /> Distribuição de Usuários
+                  </h3>
+                  <div className="space-y-4">
+                    {/* Active vs Banned bar */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground">Ativos</span>
+                        <span className="text-xs font-semibold text-foreground">{stats.totalUsers - stats.bannedCount}</span>
+                      </div>
+                      <div className="h-3 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-700"
+                          style={{ width: stats.totalUsers > 0 ? `${((stats.totalUsers - stats.bannedCount) / stats.totalUsers) * 100}%` : "0%" }}
+                        />
                       </div>
                     </div>
-                  ))}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground">Bloqueados</span>
+                        <span className="text-xs font-semibold text-foreground">{stats.bannedCount}</span>
+                      </div>
+                      <div className="h-3 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-700"
+                          style={{ width: stats.totalUsers > 0 ? `${(stats.bannedCount / stats.totalUsers) * 100}%` : "0%" }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground">Novos este mês</span>
+                        <span className="text-xs font-semibold text-foreground">{stats.newThisMonth}</span>
+                      </div>
+                      <div className="h-3 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-700"
+                          style={{ width: stats.totalUsers > 0 ? `${(stats.newThisMonth / stats.totalUsers) * 100}%` : "0%" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Summary pie-like visual */}
+                    <div className="flex items-center justify-center pt-2">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Ativos</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Bloqueados</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Novos</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Users */}
+                <div className="bg-card rounded-2xl p-5 border border-border shadow-card">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
+                      <UserPlus className="w-4 h-4 text-primary" /> Últimos Cadastros
+                    </h3>
+                    <button
+                      onClick={() => setActiveSection("users")}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Ver todos →
+                    </button>
+                  </div>
+                  <div className="space-y-2.5">
+                    {users.slice(0, 6).map((u) => (
+                      <div key={u.id} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          {u.avatar_url ? (
+                            <img src={u.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                              <User className="w-4 h-4 text-primary" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{u.nome || "Sem nome"}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-2">
+                          <p className="text-[11px] text-muted-foreground">{new Date(u.created_at).toLocaleDateString("pt-BR")}</p>
+                          {u.banned ? (
+                            <span className="text-[9px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-medium">Bloqueado</span>
+                          ) : u.last_sign_in_at && (new Date().getTime() - new Date(u.last_sign_in_at).getTime()) < 86400000 ? (
+                            <span className="text-[9px] bg-accent text-accent-foreground px-1.5 py-0.5 rounded-full font-medium">Online</span>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
+                    {users.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-6">Nenhum usuário cadastrado.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </>
