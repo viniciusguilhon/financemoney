@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { FinanceProvider } from "@/contexts/FinanceContext";
 import AppLayout from "@/components/AppLayout";
 import ScrollToTop from "@/components/ScrollToTop";
+import WelcomeDialog from "@/components/WelcomeDialog";
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
