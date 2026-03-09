@@ -55,6 +55,7 @@ const Admin = () => {
   const [adminPassword, setAdminPassword] = useState("");
   const [activeSection, setActiveSection] = useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [bankTemplates, setBankTemplates] = useState<BankTemplate[]>([]);
   const [cardTemplates, setCardTemplates] = useState<CardTemplate[]>([]);
