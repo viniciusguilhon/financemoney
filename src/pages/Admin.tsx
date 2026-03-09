@@ -153,7 +153,7 @@ const Admin = () => {
 
   const loadData = async (pw: string) => {
     const headers = { "x-admin-password": pw };
-    const [bankRes, cardRes, settingsRes, usersRes, dashRes, signupRes, tutorialRes, customizationRes] = await Promise.all([
+    const [bankRes, cardRes, settingsRes, usersRes, dashRes, signupRes, tutorialRes, customizationRes, collabRes] = await Promise.all([
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=bank`, { headers }),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=card`, { headers }),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=whatsapp_support`),
@@ -162,6 +162,7 @@ const Admin = () => {
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=signup_disabled`),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=tutorial_videos`),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=app_customization`),
+      fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=collaborators`),
     ]);
     if (bankRes.ok) setBankTemplates(await bankRes.json());
     if (cardRes.ok) setCardTemplates(await cardRes.json());
@@ -194,6 +195,10 @@ const Admin = () => {
         setAppCustomization(prev => ({ ...prev, ...d }));
         if (d.logoUrl) setCustomLogoPreview(d.logoUrl);
       }
+    }
+    if (collabRes.ok) {
+      const d = await collabRes.json();
+      if (d?.list && Array.isArray(d.list)) setCollaborators(d.list);
     }
   };
 
