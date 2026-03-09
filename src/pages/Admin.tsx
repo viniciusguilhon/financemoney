@@ -1144,6 +1144,131 @@ const Admin = () => {
                 <div><Label>Nome do botão</Label><Input value={whatsappConfig.label} onChange={(e) => setWhatsappConfig({ ...whatsappConfig, label: e.target.value })} placeholder="Suporte" className="mt-1" /></div>
                 <Button onClick={handleSaveWhatsapp} disabled={savingWhatsapp} className="w-full gradient-primary text-primary-foreground">{savingWhatsapp ? "Salvando..." : "Salvar Configuração"}</Button>
               </div>
+
+              {/* App Customization */}
+              <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center">
+                    <Settings className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-semibold text-foreground">Personalização do App</h3>
+                    <p className="text-xs text-muted-foreground">Customize a logo, nome e cores do aplicativo</p>
+                  </div>
+                </div>
+
+                {/* Logo Upload */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Logo do App</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-2xl bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden">
+                      {customLogoPreview ? (
+                        <img src={customLogoPreview} alt="Logo" className="w-full h-full object-contain" />
+                      ) : (
+                        <Image className="w-8 h-8 text-muted-foreground/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <input type="file" accept="image/*" ref={customLogoRef} className="hidden" onChange={handleCustomLogoChange} />
+                      <Button variant="outline" size="sm" onClick={() => customLogoRef.current?.click()} className="gap-2">
+                        <Upload className="w-4 h-4" /> Enviar Logo
+                      </Button>
+                      {customLogoPreview && (
+                        <Button variant="ghost" size="sm" onClick={() => { setCustomLogoFile(null); setCustomLogoPreview(""); setAppCustomization(prev => ({ ...prev, logoUrl: "" })); }} className="text-destructive hover:text-destructive">
+                          <Trash2 className="w-4 h-4 mr-1" /> Remover
+                        </Button>
+                      )}
+                      <p className="text-[10px] text-muted-foreground">PNG ou JPG, máx. 2MB. Recomendado: 512x512px</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* App Name */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Nome do App</Label>
+                  <Input 
+                    value={appCustomization.appName} 
+                    onChange={(e) => setAppCustomization(prev => ({ ...prev, appName: e.target.value }))} 
+                    placeholder="Finanças PRO" 
+                  />
+                  <p className="text-[10px] text-muted-foreground">Este nome aparece no cabeçalho e rodapé do app</p>
+                </div>
+
+                {/* Colors */}
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium">Cores por Seção</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {colorOptions.map(({ key, label, icon }) => (
+                      <div key={key} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
+                        <span className="text-lg">{icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{label}</p>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="color"
+                            value={(() => {
+                              const hsl = appCustomization.colors[key as keyof typeof appCustomization.colors] || "hsl(152, 76%, 36%)";
+                              // Simple HSL to hex conversion for color picker
+                              const match = hsl.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+                              if (match) {
+                                const h = parseInt(match[1]) / 360;
+                                const s = parseInt(match[2]) / 100;
+                                const l = parseInt(match[3]) / 100;
+                                const hue2rgb = (p: number, q: number, t: number) => {
+                                  if (t < 0) t += 1;
+                                  if (t > 1) t -= 1;
+                                  if (t < 1/6) return p + (q - p) * 6 * t;
+                                  if (t < 1/2) return q;
+                                  if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                                  return p;
+                                };
+                                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                                const p = 2 * l - q;
+                                const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+                                const g = Math.round(hue2rgb(p, q, h) * 255);
+                                const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+                                return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                              }
+                              return "#22c55e";
+                            })()}
+                            onChange={(e) => {
+                              const hex = e.target.value;
+                              // Convert hex to HSL
+                              const r = parseInt(hex.slice(1, 3), 16) / 255;
+                              const g = parseInt(hex.slice(3, 5), 16) / 255;
+                              const b = parseInt(hex.slice(5, 7), 16) / 255;
+                              const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                              let h = 0, s = 0;
+                              const l = (max + min) / 2;
+                              if (max !== min) {
+                                const d = max - min;
+                                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                                switch (max) {
+                                  case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                                  case g: h = ((b - r) / d + 2) / 6; break;
+                                  case b: h = ((r - g) / d + 4) / 6; break;
+                                }
+                              }
+                              const hslStr = `hsl(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+                              setAppCustomization(prev => ({
+                                ...prev,
+                                colors: { ...prev.colors, [key]: hslStr }
+                              }));
+                            }}
+                            className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Clique nas caixas de cor para alterar. As mudanças serão aplicadas após salvar.</p>
+                </div>
+
+                <Button onClick={handleSaveCustomization} disabled={savingCustomization} className="w-full gradient-primary text-primary-foreground">
+                  {savingCustomization ? "Salvando..." : "Salvar Personalização"}
+                </Button>
+              </div>
             </>
           )}
         </div>
