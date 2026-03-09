@@ -1217,7 +1217,7 @@ const Admin = () => {
                       <div className="w-20 h-12 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">{t.nome.slice(0, 4)}</div>
                     )}
                     <div className="flex-1"><p className="font-semibold text-foreground">{t.nome}</p><p className="text-xs text-muted-foreground">{t.bandeira}</p></div>
-                    <button onClick={() => handleDeleteTemplate(t.id, "card")} className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDeleteTemplate(t.id, "card")} className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
                 {cardTemplates.length === 0 && <p className="text-muted-foreground col-span-full text-center py-8">Nenhum cartão cadastrado ainda.</p>}
