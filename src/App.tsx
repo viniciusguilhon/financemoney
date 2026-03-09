@@ -13,7 +13,8 @@ import ScrollToTop from "@/components/ScrollToTop";
 // Eagerly load critical pages
 import Auth from "@/pages/Auth";
 
-// Lazy load secondary pages
+// Lazy load pages
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Lancamentos = lazy(() => import("@/pages/Lancamentos"));
 const Cartoes = lazy(() => import("@/pages/Cartoes"));
 const Bancos = lazy(() => import("@/pages/Bancos"));
