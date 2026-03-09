@@ -11,7 +11,6 @@ import AppLayout from "@/components/AppLayout";
 import ScrollToTop from "@/components/ScrollToTop";
 
 // Eagerly load critical pages
-import Dashboard from "@/pages/Dashboard";
 import Auth from "@/pages/Auth";
 
 // Lazy load secondary pages
