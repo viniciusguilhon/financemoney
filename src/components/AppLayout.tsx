@@ -74,7 +74,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { signOut } = useAuth();
   const { refreshData } = useFinance();
   const [whatsapp, setWhatsapp] = useState<WhatsAppConfig | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  
 
   useEffect(() => {
     let mounted = true;
