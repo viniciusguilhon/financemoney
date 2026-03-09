@@ -456,7 +456,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     if (user) await loadAll();
   }, [user]);
 
-  const value: FinanceContextType = {
+  const value = useMemo<FinanceContextType>(() => ({
     currentMonth, currentYear, setCurrentMonth, setCurrentYear, currentMesAno,
     transactions, addTransaction, updateTransaction, deleteTransaction, getMonthTransactions,
     cards, addCard, updateCard, deleteCard,
@@ -466,7 +466,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     categories, addCategory, updateCategory, deleteCategory,
     savingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
     loading, refreshData,
-  };
+  }), [currentMonth, currentYear, currentMesAno, transactions, cards, banks, bills, investments, categories, savingsGoals, loading, refreshData, getMonthTransactions, getMonthBills]);
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
 };
