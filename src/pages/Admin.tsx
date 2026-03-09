@@ -608,28 +608,19 @@ const Admin = () => {
       )}
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 flex justify-around py-1.5 px-1">
-        {navItems.slice(0, 5).map((item) => (
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 flex justify-around py-1.5 px-0.5 safe-area-bottom">
+        {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveSection(item.id)}
-            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[9px] font-medium transition-colors ${
+            className={`flex flex-col items-center gap-0.5 px-1 py-1 rounded-lg text-[8px] font-medium transition-colors min-w-0 ${
               activeSection === item.id ? "text-primary" : "text-muted-foreground"
             }`}
           >
-            <item.icon className={`w-5 h-5 ${activeSection === item.id ? "text-primary" : ""}`} />
-            {item.label.length > 8 ? item.label.slice(0, 7) + "…" : item.label}
+            <item.icon className={`w-4 h-4 flex-shrink-0 ${activeSection === item.id ? "text-primary" : ""}`} />
+            <span className="truncate max-w-[48px]">{item.label.length > 6 ? item.label.slice(0, 6) + "…" : item.label}</span>
           </button>
         ))}
-        <button
-          onClick={() => setActiveSection("settings")}
-          className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[9px] font-medium transition-colors ${
-            activeSection === "settings" ? "text-primary" : "text-muted-foreground"
-          }`}
-        >
-          <Settings className={`w-5 h-5 ${activeSection === "settings" ? "text-primary" : ""}`} />
-          Config
-        </button>
       </nav>
 
       {/* Desktop Sidebar */}
