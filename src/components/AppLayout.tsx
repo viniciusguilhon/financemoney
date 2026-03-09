@@ -258,7 +258,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       )}
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 flex justify-around py-1.5 px-1">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 flex justify-around py-1.5 px-1 safe-area-bottom">
         {navItems.filter(i => ["/", "/lancamentos", "/cartoes", "/bancos", "/investimentos"].includes(i.path)).map((item) => {
           const active = location.pathname === item.path;
           return (
