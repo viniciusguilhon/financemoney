@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -7,14 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useFinance, Bank } from "@/contexts/FinanceContext";
 import { supabase } from "@/integrations/supabase/client";
 import ConfirmDialog from "@/components/ConfirmDialog";
-
-interface BankTemplate {
-  id: string;
-  nome: string;
-  logo_url: string | null;
-  cor: string;
-  abbr: string;
-}
+import BankLogo, { BankTemplate } from "@/components/BankLogo";
 
 const Bancos = () => {
   const { banks, addBank, updateBank, deleteBank } = useFinance();
@@ -26,20 +19,22 @@ const Bancos = () => {
   const [bankForm, setBankForm] = useState({ nome: "", saldo: "" });
 
   useEffect(() => {
+    let mounted = true;
     supabase.from("bank_templates").select("*").order("nome").then(({ data }) => {
-      if (data) setTemplates(data as BankTemplate[]);
+      if (data && mounted) setTemplates(data as BankTemplate[]);
     });
+    return () => { mounted = false; };
   }, []);
 
-  const totalSaldo = banks.reduce((acc, b) => acc + b.saldo, 0);
+  const totalSaldo = useMemo(() => banks.reduce((acc, b) => acc + b.saldo, 0), [banks]);
 
-  const resetBankForm = () => {
+  const resetBankForm = useCallback(() => {
     setBankForm({ nome: "", saldo: "" });
     setSelectedTemplate(null);
     setEditingBankId(null);
-  };
+  }, []);
 
-  const handleBankSubmit = () => {
+  const handleBankSubmit = useCallback(() => {
     if (!selectedTemplate && !editingBankId) return;
     const template = selectedTemplate || templates.find((t) => t.nome === banks.find((b) => b.id === editingBankId)?.nome);
     const data = {
@@ -53,31 +48,9 @@ const Bancos = () => {
     else addBank(data);
     setBankOpen(false);
     resetBankForm();
-  };
+  }, [selectedTemplate, editingBankId, templates, banks, bankForm, addBank, updateBank, resetBankForm]);
 
-  const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-
-  const getTemplateForBank = (bank: Bank) => templates.find((t) => t.nome === bank.nome || t.nome === bank.logo);
-
-  const BankLogo = ({ bank, size = 40 }: { bank: Bank; size?: number }) => {
-    const template = getTemplateForBank(bank);
-    if (template?.logo_url) {
-      return <img src={template.logo_url} alt={bank.nome} className="rounded-xl object-cover shadow-sm" style={{ width: size, height: size }} />;
-    }
-    if (bank.customLogo) {
-      return <img src={bank.customLogo} alt="Logo" className="rounded-xl object-cover shadow-sm" style={{ width: size, height: size }} />;
-    }
-    const abbr = template?.abbr || bank.nome.slice(0, 2);
-    const color = template?.cor || bank.cor || "hsl(215, 20%, 50%)";
-    return (
-      <div
-        className="rounded-xl flex items-center justify-center font-bold text-primary-foreground shadow-sm"
-        style={{ width: size, height: size, backgroundColor: color, fontSize: size * 0.3 }}
-      >
-        {abbr}
-      </div>
-    );
-  };
+  const fmt = useCallback((v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, []);
 
   return (
     <div className="space-y-6">
