@@ -9,10 +9,12 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { FinanceProvider } from "@/contexts/FinanceContext";
 import AppLayout from "@/components/AppLayout";
 import ScrollToTop from "@/components/ScrollToTop";
-import WelcomeDialog from "@/components/WelcomeDialog";
 
-// Lazy load pages for better performance
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
+// Eagerly load critical pages
+import Dashboard from "@/pages/Dashboard";
+import Auth from "@/pages/Auth";
+
+// Lazy load secondary pages
 const Lancamentos = lazy(() => import("@/pages/Lancamentos"));
 const Cartoes = lazy(() => import("@/pages/Cartoes"));
 const Bancos = lazy(() => import("@/pages/Bancos"));
@@ -20,7 +22,6 @@ const Investimentos = lazy(() => import("@/pages/Investimentos"));
 const Relatorios = lazy(() => import("@/pages/Relatorios"));
 const Perfil = lazy(() => import("@/pages/Perfil"));
 const Tutorial = lazy(() => import("@/pages/Tutorial"));
-const Auth = lazy(() => import("@/pages/Auth"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Admin = lazy(() => import("@/pages/Admin"));
@@ -35,8 +36,8 @@ const queryClient = new QueryClient({
 });
 
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="animate-pulse text-primary font-display text-xl">Carregando...</div>
+  <div className="min-h-[50vh] flex items-center justify-center">
+    <div className="animate-pulse text-primary font-display text-lg">Carregando...</div>
   </div>
 );
 
@@ -44,14 +45,17 @@ const ProtectedRoutes = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <PageLoader />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-primary font-display text-xl">Carregando...</div>
+      </div>
+    );
   }
 
   if (!user) return <Navigate to="/auth" replace />;
 
   return (
     <FinanceProvider>
-      <WelcomeDialog />
       <AppLayout>
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -73,7 +77,11 @@ const ProtectedRoutes = () => {
 
 const AuthGuard = () => {
   const { user, loading } = useAuth();
-  if (loading) return <PageLoader />;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="animate-pulse text-primary font-display text-xl">Carregando...</div>
+    </div>
+  );
   if (user) return <Navigate to="/" replace />;
   return <Auth />;
 };
@@ -87,7 +95,11 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
-            <Suspense fallback={<PageLoader />}>
+            <Suspense fallback={
+              <div className="min-h-screen flex items-center justify-center bg-background">
+                <div className="animate-pulse text-primary font-display text-xl">Carregando...</div>
+              </div>
+            }>
               <Routes>
                 <Route path="/auth" element={<AuthGuard />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
