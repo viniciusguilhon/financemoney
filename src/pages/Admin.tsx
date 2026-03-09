@@ -1012,6 +1012,132 @@ const Admin = () => {
             </>
           )}
 
+          {/* Collaborators */}
+          {activeSection === "collaborators" && (
+            <>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Colaboradores</h1>
+                  <p className="text-sm text-muted-foreground">Adicione colaboradores e defina suas permissões no app</p>
+                </div>
+                <Button onClick={() => { setCollabForm({ email: "", nome: "", permissions: [] }); setEditCollabId(null); setCollabDialogOpen(true); }} className="gap-2 gradient-primary text-primary-foreground">
+                  <Plus className="w-4 h-4" /> Adicionar
+                </Button>
+              </div>
+
+              {/* Collaborators List */}
+              {collaborators.length === 0 ? (
+                <div className="bg-card rounded-2xl p-10 border border-border shadow-card text-center">
+                  <UserCog className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                  <h3 className="font-display font-semibold text-foreground mb-1">Nenhum colaborador</h3>
+                  <p className="text-sm text-muted-foreground">Adicione colaboradores para delegar tarefas administrativas</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {collaborators.map((collab) => (
+                    <div key={collab.id} className="bg-card rounded-2xl p-4 border border-border shadow-card">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <UserCog className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-semibold text-foreground text-sm">{collab.nome || "Sem nome"}</h4>
+                            {collab.email && <span className="text-xs text-muted-foreground">{collab.email}</span>}
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {collab.permissions.map((perm) => {
+                              const permInfo = availablePermissions.find(p => p.key === perm);
+                              return (
+                                <span key={perm} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+                                  {permInfo && <permInfo.icon className="w-3 h-3" />}
+                                  {permInfo?.label || perm}
+                                </span>
+                              );
+                            })}
+                            {collab.permissions.length === 0 && (
+                              <span className="text-[10px] text-muted-foreground italic">Sem permissões definidas</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => {
+                              setEditCollabId(collab.id);
+                              setCollabForm({ email: collab.email, nome: collab.nome, permissions: collab.permissions });
+                              setCollabDialogOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCollaborator(collab.id)}
+                            className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button onClick={handleSaveCollaborators} disabled={savingCollab} className="w-full gradient-primary text-primary-foreground">
+                {savingCollab ? "Salvando..." : "Salvar Colaboradores"}
+              </Button>
+
+              {/* Add/Edit Collaborator Dialog */}
+              <Dialog open={collabDialogOpen} onOpenChange={setCollabDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>{editCollabId ? "Editar Colaborador" : "Adicionar Colaborador"}</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-2">
+                    <div>
+                      <Label>Nome</Label>
+                      <Input value={collabForm.nome} onChange={(e) => setCollabForm({ ...collabForm, nome: e.target.value })} placeholder="Nome do colaborador" className="mt-1" />
+                    </div>
+                    <div>
+                      <Label>E-mail</Label>
+                      <Input type="email" value={collabForm.email} onChange={(e) => setCollabForm({ ...collabForm, email: e.target.value })} placeholder="email@exemplo.com" className="mt-1" />
+                    </div>
+                    <div className="space-y-3">
+                      <Label>Permissões</Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {availablePermissions.map(({ key, label, icon: Icon }) => {
+                          const selected = collabForm.permissions.includes(key);
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => togglePermission(key)}
+                              className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                                selected
+                                  ? "border-primary bg-primary/5 text-primary"
+                                  : "border-border bg-card text-muted-foreground hover:border-primary/30"
+                              }`}
+                            >
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${selected ? "bg-primary/15" : "bg-muted"}`}>
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm font-medium flex-1">{label}</span>
+                              {selected && <Check className="w-4 h-4 text-primary" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <Button onClick={handleAddCollaborator} className="gradient-primary text-primary-foreground">
+                      {editCollabId ? "Salvar Alterações" : "Adicionar Colaborador"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+
           {/* Banks */}
           {activeSection === "banks" && (
             <>
