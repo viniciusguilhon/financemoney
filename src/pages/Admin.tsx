@@ -475,6 +475,7 @@ const Admin = () => {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "users", label: "Usuários", icon: Users },
+    { id: "collaborators", label: "Colaboradores", icon: UserCog },
     { id: "banks", label: "Bancos", icon: Building2 },
     { id: "cards", label: "Cartões", icon: CreditCard },
     { id: "tutorials", label: "Tutoriais", icon: Video },
