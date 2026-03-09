@@ -74,7 +74,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { signOut } = useAuth();
   const { refreshData } = useFinance();
   const [whatsapp, setWhatsapp] = useState<WhatsAppConfig | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  
 
   useEffect(() => {
     let mounted = true;
@@ -88,7 +88,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshData();
-    setRefreshKey((k) => k + 1);
     setTimeout(() => setRefreshing(false), 600);
   }, [refreshData]);
 
@@ -279,7 +278,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       {/* Main Content */}
       <main className={cn("flex-1 pt-14 md:pt-0 pb-16 md:pb-0 transition-all duration-200", mainMargin)}>
-        <div key={refreshKey} className="p-3 md:p-8 max-w-7xl mx-auto">
+        <div className="p-3 md:p-8 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
