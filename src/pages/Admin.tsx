@@ -517,7 +517,9 @@ const Admin = () => {
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border flex items-center justify-between px-3 z-40">
-        <MoneyLogo size="sm" />
+        <div className="cursor-pointer" onClick={() => setActiveSection("dashboard")}>
+          <MoneyLogo size="sm" />
+        </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
