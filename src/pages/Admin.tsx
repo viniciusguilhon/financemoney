@@ -608,17 +608,23 @@ const Admin = () => {
       )}
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 flex justify-around py-1.5 px-0.5 safe-area-bottom">
-        {navItems.map((item) => (
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 flex justify-around py-2 px-2 safe-area-bottom">
+        {[
+          { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { id: "users", label: "Usuários", icon: Users },
+          { id: "banks", label: "Bancos", icon: Building2 },
+          { id: "cards", label: "Cartões", icon: CreditCard },
+          { id: "settings", label: "Config.", icon: Settings },
+        ].map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveSection(item.id)}
-            className={`flex flex-col items-center gap-0.5 px-1 py-1 rounded-lg text-[8px] font-medium transition-colors min-w-0 ${
+            className={`flex flex-col items-center gap-1 px-2 py-1 rounded-xl text-[10px] font-medium transition-colors ${
               activeSection === item.id ? "text-primary" : "text-muted-foreground"
             }`}
           >
-            <item.icon className={`w-4 h-4 flex-shrink-0 ${activeSection === item.id ? "text-primary" : ""}`} />
-            <span className="truncate max-w-[48px]">{item.label.length > 6 ? item.label.slice(0, 6) + "…" : item.label}</span>
+            <item.icon className={`w-5 h-5 ${activeSection === item.id ? "text-primary" : ""}`} />
+            <span>{item.label}</span>
           </button>
         ))}
       </nav>
