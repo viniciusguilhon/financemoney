@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { PlayCircle, Play, SkipForward, SkipBack, ListVideo, MonitorPlay, ChevronDown } from "lucide-react";
+import { PlayCircle, Play, SkipForward, SkipBack, ListVideo, MonitorPlay, Folder } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -32,7 +33,6 @@ const Tutorial = () => {
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data) {
-          // Support new playlists format
           if (Array.isArray(data.playlists) && data.playlists.length > 0) {
             setPlaylists(data.playlists);
             setActivePlaylistId(data.playlists[0].id);
@@ -40,9 +40,7 @@ const Tutorial = () => {
             if (firstPlaylist.videos.length > 0) {
               setActiveVideo(firstPlaylist.videos.sort((a: TutorialVideo, b: TutorialVideo) => a.order - b.order)[0]);
             }
-          }
-          // Fallback to old format (flat videos array)
-          else if (Array.isArray(data.videos) && data.videos.length > 0) {
+          } else if (Array.isArray(data.videos) && data.videos.length > 0) {
             const sorted = data.videos.sort((a: TutorialVideo, b: TutorialVideo) => a.order - b.order);
             const legacyPlaylist: TutorialPlaylist = { id: "default", name: "Tutoriais", videos: sorted };
             setPlaylists([legacyPlaylist]);
@@ -104,36 +102,71 @@ const Tutorial = () => {
     );
   }
 
+  // Get first video thumbnail of each playlist for the card
+  const getPlaylistThumb = (pl: TutorialPlaylist) => {
+    const first = pl.videos.sort((a, b) => a.order - b.order)[0];
+    if (!first) return null;
+    const ytId = extractYouTubeId(first.url);
+    return ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : null;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl md:text-3xl font-display font-bold text-foreground">Tutorial de Uso</h1>
-          <p className="text-muted-foreground text-xs md:text-sm mt-1">Aprenda a usar o sistema com nossos vídeos</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Playlist Selector */}
-          {playlists.length > 1 && (
-            <div className="relative">
-              <select
-                value={activePlaylistId || ""}
-                onChange={(e) => handlePlaylistChange(e.target.value)}
-                className="appearance-none bg-card border border-border rounded-xl pl-3 pr-8 py-2 text-sm font-medium text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                {playlists.map((pl) => (
-                  <option key={pl.id} value={pl.id}>{pl.name} ({pl.videos.length})</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            </div>
-          )}
-          <div className="hidden md:flex items-center gap-2 bg-muted/60 rounded-full px-3 py-1.5">
-            <ListVideo className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">{sortedVideos.length} {sortedVideos.length === 1 ? "vídeo" : "vídeos"}</span>
-          </div>
-        </div>
+      <div>
+        <h1 className="text-xl md:text-3xl font-display font-bold text-foreground">Tutorial de Uso</h1>
+        <p className="text-muted-foreground text-xs md:text-sm mt-1">Aprenda a usar o sistema com nossos vídeos</p>
       </div>
+
+      {/* Playlist Cards - horizontal scroll */}
+      {playlists.length > 1 && (
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
+          {playlists.map((pl) => {
+            const isActive = pl.id === activePlaylistId;
+            const thumb = getPlaylistThumb(pl);
+            return (
+              <button
+                key={pl.id}
+                onClick={() => handlePlaylistChange(pl.id)}
+                className={`flex-shrink-0 group relative rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                  isActive
+                    ? "border-primary shadow-md ring-2 ring-primary/20"
+                    : "border-border hover:border-primary/40 hover:shadow-sm"
+                }`}
+                style={{ width: 180 }}
+              >
+                {/* Thumbnail background */}
+                <div className="relative h-24 bg-muted overflow-hidden">
+                  {thumb ? (
+                    <img src={thumb} alt={pl.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Folder className="w-8 h-8 text-muted-foreground/30" />
+                    </div>
+                  )}
+                  {/* Overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  {/* Video count badge */}
+                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                    <ListVideo className="w-3 h-3" />
+                    {pl.videos.length}
+                  </div>
+                  {/* Playlist name */}
+                  <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                    <p className="text-white text-xs font-semibold leading-tight line-clamp-2 drop-shadow-md">
+                      {pl.name}
+                    </p>
+                  </div>
+                </div>
+                {/* Active indicator bar */}
+                {isActive && (
+                  <div className="h-0.5 bg-primary" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main Player */}
@@ -188,12 +221,12 @@ const Tutorial = () => {
           <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
             <div className="p-4 border-b border-border flex items-center gap-2">
               <ListVideo className="w-4 h-4 text-primary" />
-              <h3 className="font-display font-semibold text-foreground text-sm">{activePlaylist?.name || "Playlist"}</h3>
+              <h3 className="font-display font-semibold text-foreground text-sm truncate">{activePlaylist?.name || "Playlist"}</h3>
               <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">
                 {sortedVideos.length}
               </span>
             </div>
-            <div className="max-h-[420px] overflow-y-auto">
+            <ScrollArea className="max-h-[420px]">
               {sortedVideos.map((video, idx) => {
                 const ytId = extractYouTubeId(video.url);
                 const isActive = activeVideo?.id === video.id;
@@ -202,12 +235,9 @@ const Tutorial = () => {
                     key={video.id}
                     onClick={() => setActiveVideo(video)}
                     className={`w-full flex items-center gap-3 p-3 text-left transition-all duration-150 border-b border-border/50 last:border-b-0 ${
-                      isActive
-                        ? "bg-primary/10"
-                        : "hover:bg-muted/50"
+                      isActive ? "bg-primary/10" : "hover:bg-muted/50"
                     }`}
                   >
-                    {/* Thumbnail */}
                     <div className="w-20 h-12 rounded-lg overflow-hidden flex-shrink-0 relative bg-muted">
                       {ytId && (
                         <img
@@ -218,7 +248,7 @@ const Tutorial = () => {
                       )}
                       {isActive ? (
                         <div className="absolute inset-0 bg-primary/40 flex items-center justify-center backdrop-blur-[1px]">
-                          <Play className="w-4 h-4 text-white fill-white" />
+                          <Play className="w-4 h-4 text-primary-foreground fill-white" />
                         </div>
                       ) : (
                         <div className="absolute bottom-0.5 left-0.5 bg-black/70 text-white text-[9px] font-bold px-1 rounded">
@@ -226,7 +256,6 @@ const Tutorial = () => {
                         </div>
                       )}
                     </div>
-                    {/* Info */}
                     <div className="min-w-0 flex-1">
                       <p className={`text-xs font-semibold leading-tight line-clamp-2 ${isActive ? "text-primary" : "text-foreground"}`}>
                         {video.title}
@@ -236,7 +265,7 @@ const Tutorial = () => {
                   </button>
                 );
               })}
-            </div>
+            </ScrollArea>
           </div>
         </div>
       </div>
