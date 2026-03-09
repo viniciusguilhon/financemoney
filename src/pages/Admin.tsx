@@ -1167,7 +1167,7 @@ const Admin = () => {
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center text-primary-foreground font-bold" style={{ backgroundColor: t.cor }}>{t.abbr}</div>
                     )}
                     <div className="flex-1"><p className="font-semibold text-foreground">{t.nome}</p><p className="text-xs text-muted-foreground">{t.abbr}</p></div>
-                    <button onClick={() => handleDeleteTemplate(t.id, "bank")} className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDeleteTemplate(t.id, "bank")} className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
                 {bankTemplates.length === 0 && <p className="text-muted-foreground col-span-full text-center py-8">Nenhum banco cadastrado ainda.</p>}
