@@ -135,7 +135,7 @@ const Admin = () => {
 
   const loadData = async (pw: string) => {
     const headers = { "x-admin-password": pw };
-    const [bankRes, cardRes, settingsRes, usersRes, dashRes, signupRes, tutorialRes] = await Promise.all([
+    const [bankRes, cardRes, settingsRes, usersRes, dashRes, signupRes, tutorialRes, customizationRes] = await Promise.all([
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=bank`, { headers }),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=card`, { headers }),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=whatsapp_support`),
@@ -143,6 +143,7 @@ const Admin = () => {
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=dashboard`, { headers }),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=signup_disabled`),
       fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=tutorial_videos`),
+      fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=app_customization`),
     ]);
     if (bankRes.ok) setBankTemplates(await bankRes.json());
     if (cardRes.ok) setCardTemplates(await cardRes.json());
@@ -159,7 +160,6 @@ const Admin = () => {
     if (tutorialRes.ok) {
       const d = await tutorialRes.json();
       if (d) {
-        // Migrate old format (flat videos) to new playlists format
         if (Array.isArray(d.playlists)) {
           setTutorialConfig(d);
           if (d.playlists.length > 0 && !activePlaylistId) setActivePlaylistId(d.playlists[0].id);
@@ -168,6 +168,13 @@ const Admin = () => {
           setTutorialConfig(migrated);
           setActivePlaylistId("default");
         }
+      }
+    }
+    if (customizationRes.ok) {
+      const d = await customizationRes.json();
+      if (d && typeof d === 'object') {
+        setAppCustomization(prev => ({ ...prev, ...d }));
+        if (d.logoUrl) setCustomLogoPreview(d.logoUrl);
       }
     }
   };
