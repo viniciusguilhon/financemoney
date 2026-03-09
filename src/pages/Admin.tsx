@@ -27,6 +27,19 @@ interface UserProfile {
   last_sign_in_at: string | null; banned: boolean;
 }
 interface DashboardStats { totalUsers: number; newThisMonth: number; activeToday: number; bannedCount: number; }
+interface AppCustomization {
+  appName: string;
+  logoUrl: string;
+  colors: {
+    primary: string;
+    dashboard: string;
+    lancamentos: string;
+    cartoes: string;
+    bancos: string;
+    investimentos: string;
+    relatorios: string;
+  };
+}
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
