@@ -410,6 +410,41 @@ const Admin = () => {
     finally { setSavingTutorial(false); }
   };
 
+  const handleSaveCustomization = async () => {
+    try {
+      setSavingCustomization(true);
+      let logoUrl = appCustomization.logoUrl;
+      if (customLogoFile) {
+        logoUrl = await uploadImage(customLogoFile, "bank");
+      }
+      const customData = { ...appCustomization, logoUrl };
+      await adminFetch("POST", "settings", { action: "update", key: "app_customization", value: customData });
+      setAppCustomization(customData);
+      setCustomLogoFile(null);
+      toast({ title: "Personalização salva!" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    finally { setSavingCustomization(false); }
+  };
+
+  const handleCustomLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCustomLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setCustomLogoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const colorOptions = [
+    { key: "primary", label: "Cor Principal (Botões)", icon: "🎨" },
+    { key: "dashboard", label: "Dashboard", icon: "📊" },
+    { key: "lancamentos", label: "Lançamentos", icon: "💸" },
+    { key: "cartoes", label: "Cartões", icon: "💳" },
+    { key: "bancos", label: "Bancos", icon: "🏦" },
+    { key: "investimentos", label: "Investimentos", icon: "📈" },
+    { key: "relatorios", label: "Relatórios", icon: "📉" },
+  ];
+
   const activePlaylist = (tutorialConfig.playlists || []).find(p => p.id === activePlaylistId);
   const totalVideos = (tutorialConfig.playlists || []).reduce((sum, p) => sum + p.videos.length, 0);
 
