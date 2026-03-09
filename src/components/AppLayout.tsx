@@ -88,7 +88,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshData();
-    setRefreshKey((k) => k + 1);
     setTimeout(() => setRefreshing(false), 600);
   }, [refreshData]);
 
