@@ -79,7 +79,7 @@ const WelcomeDialog = () => {
   return (
     <>
       <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-sm [&>button]:hidden" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-2xl [&>button]:hidden" onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="font-display text-center text-xl">Bem-vindo ao Money! 🎉</DialogTitle>
           </DialogHeader>
