@@ -90,7 +90,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background p-4">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background p-4 pt-[10vh]">
       <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center gap-3">
           <MoneyLogo size="lg" />
