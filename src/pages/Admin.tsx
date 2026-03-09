@@ -99,6 +99,25 @@ const Admin = () => {
   const [createUserForm, setCreateUserForm] = useState({ email: "", password: "", nome: "", whatsapp: "" });
   const [creatingUser, setCreatingUser] = useState(false);
 
+  // App Customization state
+  const [appCustomization, setAppCustomization] = useState<AppCustomization>({
+    appName: "Finanças PRO",
+    logoUrl: "",
+    colors: {
+      primary: "hsl(152, 76%, 36%)",
+      dashboard: "hsl(152, 76%, 36%)",
+      lancamentos: "hsl(215, 70%, 50%)",
+      cartoes: "hsl(280, 70%, 50%)",
+      bancos: "hsl(200, 70%, 45%)",
+      investimentos: "hsl(45, 90%, 50%)",
+      relatorios: "hsl(340, 70%, 50%)",
+    },
+  });
+  const [savingCustomization, setSavingCustomization] = useState(false);
+  const [customLogoFile, setCustomLogoFile] = useState<File | null>(null);
+  const [customLogoPreview, setCustomLogoPreview] = useState("");
+  const customLogoRef = useRef<HTMLInputElement>(null);
+
   const bandeiras = ["Mastercard", "Visa", "Elo", "Amex", "Hipercard"];
 
   const adminFetch = async (method: string, type: string, body?: any) => {
