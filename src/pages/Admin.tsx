@@ -511,7 +511,47 @@ const Admin = () => {
     );
   }
 
-  
+  const handleSaveCollaborators = async () => {
+    try {
+      setSavingCollab(true);
+      await adminFetch("POST", "settings", { action: "update", key: "collaborators", value: { list: collaborators } });
+      toast({ title: "Colaboradores salvos!" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    finally { setSavingCollab(false); }
+  };
+
+  const handleAddCollaborator = () => {
+    if (!collabForm.email.trim() && !collabForm.nome.trim()) return;
+    const newCollab: Collaborator = {
+      id: editCollabId || Date.now().toString(),
+      email: collabForm.email.trim(),
+      nome: collabForm.nome.trim(),
+      permissions: collabForm.permissions,
+      created_at: new Date().toISOString(),
+    };
+    if (editCollabId) {
+      setCollaborators(prev => prev.map(c => c.id === editCollabId ? newCollab : c));
+      setEditCollabId(null);
+    } else {
+      setCollaborators(prev => [...prev, newCollab]);
+    }
+    setCollabForm({ email: "", nome: "", permissions: [] });
+    setCollabDialogOpen(false);
+  };
+
+  const handleDeleteCollaborator = (id: string) => {
+    setCollaborators(prev => prev.filter(c => c.id !== id));
+  };
+
+  const togglePermission = (perm: string) => {
+    setCollabForm(prev => ({
+      ...prev,
+      permissions: prev.permissions.includes(perm)
+        ? prev.permissions.filter(p => p !== perm)
+        : [...prev.permissions, perm],
+    }));
+  };
+
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
