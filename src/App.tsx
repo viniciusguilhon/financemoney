@@ -51,6 +51,7 @@ const ProtectedRoutes = () => {
 
   return (
     <FinanceProvider>
+      <WelcomeDialog />
       <AppLayout>
         <Suspense fallback={<PageLoader />}>
           <Routes>
