@@ -162,7 +162,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           <button
             onClick={() => setLogoutOpen(true)}
             title={sidebarCollapsed ? "Sair" : undefined}
-            className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full transition-colors", sidebarCollapsed && "justify-center px-0")}
+            className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-destructive hover:bg-destructive/10 w-full transition-colors", sidebarCollapsed && "justify-center px-0")}
           >
             <LogOut className="w-[18px] h-[18px]" />
             {!sidebarCollapsed && "Sair"}
