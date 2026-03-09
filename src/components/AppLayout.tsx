@@ -85,14 +85,18 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return () => { mounted = false; };
   }, []);
 
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshData();
     setRefreshKey((k) => k + 1);
     setTimeout(() => setRefreshing(false), 600);
-  };
+  }, [refreshData]);
+
+  const closeMobileMenu = useCallback(() => setMobileOpen(false), []);
+  const toggleSidebar = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSidebarCollapsed(prev => !prev);
+  }, []);
 
   const sidebarWidth = sidebarCollapsed ? "w-16" : "w-60";
   const mainMargin = sidebarCollapsed ? "md:ml-16" : "md:ml-60";
