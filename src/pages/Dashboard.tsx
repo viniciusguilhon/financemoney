@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowUpRight, ArrowDownRight,
@@ -9,14 +9,6 @@ import { useFinance, BANK_LOGOS } from "@/contexts/FinanceContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
-
-// Lazy load recharts components for faster initial render
-const RechartsComponents = lazy(() => 
-  import("recharts").then(mod => ({
-    default: () => null, // placeholder
-    ...mod
-  }))
-);
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area,
