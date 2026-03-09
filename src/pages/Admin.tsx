@@ -590,8 +590,10 @@ const Admin = () => {
       {/* Desktop Sidebar */}
       <aside className={`hidden md:flex ${sidebarCollapsed ? "w-16" : "w-60"} bg-card border-r border-border flex-col transition-all duration-300 flex-shrink-0`}>
         <div className="p-4 flex items-center justify-between border-b border-border">
-          {!sidebarCollapsed && <MoneyLogo size="sm" />}
-          {sidebarCollapsed && <div className="w-full flex justify-center"><MoneyLogo size="sm" hideText /></div>}
+          <div className="cursor-pointer" onClick={() => setActiveSection("dashboard")}>
+            {!sidebarCollapsed && <MoneyLogo size="sm" />}
+            {sidebarCollapsed && <div className="w-full flex justify-center"><MoneyLogo size="sm" hideText /></div>}
+          </div>
           <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
             {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
