@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useCallback, memo } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ArrowLeftRight, CreditCard, Landmark, TrendingUp,
@@ -25,6 +25,8 @@ const navItems = [
   { path: "/perfil", label: "Perfil", icon: User },
 ];
 
+const bottomNavItems = navItems.filter(i => ["/", "/lancamentos", "/cartoes", "/bancos", "/investimentos"].includes(i.path));
+
 interface WhatsAppConfig {
   enabled: boolean;
   url: string;
@@ -35,6 +37,31 @@ interface WhatsAppConfig {
 interface AppLayoutProps {
   children: ReactNode;
 }
+
+// Memoized nav item component
+const NavItem = memo(({ item, active, collapsed, onClick }: { 
+  item: typeof navItems[0]; 
+  active: boolean; 
+  collapsed: boolean;
+  onClick?: () => void;
+}) => (
+  <Link
+    to={item.path}
+    onClick={onClick}
+    title={collapsed ? item.label : undefined}
+    className={cn(
+      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
+      collapsed && "justify-center px-0",
+      active
+        ? "bg-primary/15 text-primary"
+        : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+    )}
+  >
+    <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", active && "text-primary")} />
+    {!collapsed && item.label}
+  </Link>
+));
+NavItem.displayName = "NavItem";
 
 const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
@@ -47,22 +74,29 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { signOut } = useAuth();
   const { refreshData } = useFinance();
   const [whatsapp, setWhatsapp] = useState<WhatsAppConfig | null>(null);
-
-  useEffect(() => {
-    fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=whatsapp_support`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data) setWhatsapp(data); })
-      .catch(() => {});
-  }, []);
-
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleRefresh = async () => {
+  useEffect(() => {
+    let mounted = true;
+    fetch(`${SUPABASE_URL}/functions/v1/admin-templates?type=settings&key=whatsapp_support`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data && mounted) setWhatsapp(data); })
+      .catch(() => {});
+    return () => { mounted = false; };
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshData();
     setRefreshKey((k) => k + 1);
     setTimeout(() => setRefreshing(false), 600);
-  };
+  }, [refreshData]);
+
+  const closeMobileMenu = useCallback(() => setMobileOpen(false), []);
+  const toggleSidebar = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSidebarCollapsed(prev => !prev);
+  }, []);
 
   const sidebarWidth = sidebarCollapsed ? "w-16" : "w-60";
   const mainMargin = sidebarCollapsed ? "md:ml-16" : "md:ml-60";
