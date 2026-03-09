@@ -1345,7 +1345,7 @@ const Admin = () => {
                                 <p className="text-sm font-semibold text-foreground truncate">{video.title}</p>
                                 <p className="text-[10px] text-muted-foreground truncate mt-0.5">{video.url}</p>
                               </div>
-                              <button onClick={() => handleRemoveTutorialVideo(video.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"><Trash2 className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => handleRemoveTutorialVideo(video.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors md:opacity-0 md:group-hover:opacity-100"><Trash2 className="w-3.5 h-3.5" /></button>
                             </div>
                           );
                         })}
