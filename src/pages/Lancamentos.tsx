@@ -584,6 +584,54 @@ const Lancamentos = () => {
             </Dialog>
           </div>
 
+          {/* Ranking de Metas Alcançadas */}
+          {(() => {
+            const achieved = savingsGoals
+              .filter((g) => g.valorAlvo > 0 && g.valorAtual >= g.valorAlvo)
+              .sort((a, b) => b.valorAlvo - a.valorAlvo);
+            if (achieved.length === 0) return null;
+            const medalColors = ["text-yellow-500", "text-muted-foreground", "text-amber-700"];
+            const MedalIcon = ({ idx }: { idx: number }) => {
+              if (idx === 0) return <Trophy className={`w-5 h-5 ${medalColors[0]}`} />;
+              if (idx === 1) return <Medal className={`w-5 h-5 ${medalColors[1]}`} />;
+              if (idx === 2) return <Medal className={`w-5 h-5 ${medalColors[2]}`} />;
+              return <Star className="w-4 h-4 text-muted-foreground" />;
+            };
+            return (
+              <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+                <div className="p-4 border-b border-border flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-yellow-500" />
+                  <h3 className="font-display font-semibold text-foreground text-sm">Ranking de Metas Alcançadas</h3>
+                  <span className="ml-auto text-[10px] font-bold text-primary bg-primary/10 rounded-full px-2 py-0.5">{achieved.length} 🏆</span>
+                </div>
+                <div className="divide-y divide-border/50">
+                  {achieved.map((goal, idx) => (
+                    <div key={goal.id} className="flex items-center gap-3 p-3 md:p-4">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <MedalIcon idx={idx} />
+                      </div>
+                      {goal.imageUrl ? (
+                        <img src={goal.imageUrl} alt={goal.nome} className="w-10 h-10 rounded-lg object-cover border border-border flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Target className="w-5 h-5 text-primary" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs md:text-sm font-bold text-foreground truncate">{goal.nome}</p>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">{goal.descricao}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs md:text-sm font-bold text-primary">{fmt(goal.valorAlvo)}</p>
+                        <p className="text-[10px] text-muted-foreground">Meta alcançada ✓</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {savingsGoals.length === 0 ? (
             <div className="bg-card rounded-xl p-12 shadow-card text-center">
               <Target className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
