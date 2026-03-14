@@ -210,7 +210,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-30 bg-foreground/50" onClick={() => setMobileOpen(false)}>
           <div
-            className="absolute top-14 left-0 right-0 bg-sidebar border-b border-sidebar-border p-3 space-y-1 animate-fade-in"
+            className="absolute top-[calc(3.5rem+env(safe-area-inset-top))] left-0 right-0 bg-sidebar border-b border-sidebar-border p-3 space-y-1 animate-fade-in"
             onClick={(e) => e.stopPropagation()}
           >
             {navItems.map((item) => {
