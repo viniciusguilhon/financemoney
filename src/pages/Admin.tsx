@@ -1539,7 +1539,7 @@ const Admin = () => {
 
       {/* Create User Dialog */}
       <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle>Adicionar Usuário</DialogTitle>
           </DialogHeader>
