@@ -243,7 +243,7 @@ const Lancamentos = () => {
                     <Plus className="w-3.5 h-3.5" /> Novo Lançamento
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="font-display">{editingId ? "Editar Lançamento" : "Novo Lançamento"}</DialogTitle>
                   </DialogHeader>
