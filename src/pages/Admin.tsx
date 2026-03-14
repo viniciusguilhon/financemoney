@@ -1087,7 +1087,7 @@ const Admin = () => {
 
               {/* Add/Edit Collaborator Dialog */}
               <Dialog open={collabDialogOpen} onOpenChange={setCollabDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl">
                   <DialogHeader>
                     <DialogTitle>{editCollabId ? "Editar Colaborador" : "Adicionar Colaborador"}</DialogTitle>
                   </DialogHeader>
