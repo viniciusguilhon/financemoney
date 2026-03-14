@@ -127,7 +127,7 @@ const ImageCropper = ({ open, onOpenChange, imageSrc, onCropComplete, aspectRati
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">
             <Move className="w-4 h-4" /> Ajustar Imagem

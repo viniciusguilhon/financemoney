@@ -105,7 +105,7 @@ const Investimentos = () => {
               <Plus className="w-4 h-4" /> Novo Investimento
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle className="font-display">{editingId ? "Editar Investimento" : "Novo Investimento"}</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-2">
               <div><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Ex: Tesouro Selic, Loja Online..." /></div>

@@ -218,7 +218,7 @@ const Lancamentos = () => {
                     <Plus className="w-3 h-3" /> Categoria
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-sm">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl">
                   <DialogHeader><DialogTitle>Nova Categoria</DialogTitle></DialogHeader>
                   <div className="grid gap-3 py-2">
                     <div><Label>Nome</Label><Input value={newCat.nome} onChange={(e) => setNewCat({ ...newCat, nome: e.target.value })} /></div>
@@ -243,7 +243,7 @@ const Lancamentos = () => {
                     <Plus className="w-3.5 h-3.5" /> Novo Lançamento
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="font-display">{editingId ? "Editar Lançamento" : "Novo Lançamento"}</DialogTitle>
                   </DialogHeader>
@@ -456,7 +456,7 @@ const Lancamentos = () => {
               <DialogTrigger asChild>
                 <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-1.5 text-xs" size="sm"><Plus className="w-3.5 h-3.5" /> Nova Conta</Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-sm">
+              <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl">
                 <DialogHeader><DialogTitle>{editingBillId ? "Editar Conta" : "Nova Conta a Pagar/Receber"}</DialogTitle></DialogHeader>
                 <div className="grid gap-3 py-2">
                   <div><Label>Descrição</Label><Input value={billForm.desc} onChange={(e) => setBillForm({ ...billForm, desc: e.target.value })} /></div>
@@ -541,7 +541,7 @@ const Lancamentos = () => {
               <DialogTrigger asChild>
                 <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-1.5 text-xs" size="sm"><Plus className="w-3.5 h-3.5" /> Nova Meta</Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle className="font-display">{editingGoalId ? "Editar Meta" : "Nova Meta de Economia"}</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-2">
                   <div><Label>O que deseja comprar?</Label><Input placeholder="Ex: iPhone 16" value={goalForm.nome} onChange={(e) => setGoalForm({ ...goalForm, nome: e.target.value })} /></div>

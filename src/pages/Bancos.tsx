@@ -63,7 +63,7 @@ const Bancos = () => {
           <DialogTrigger asChild>
             <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-2"><Plus className="w-4 h-4" /> Nova Conta</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl">
             <DialogHeader><DialogTitle>{editingBankId ? "Editar Banco" : "Nova Conta Bancária"}</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-2">
               {!editingBankId && (

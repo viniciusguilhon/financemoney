@@ -180,7 +180,7 @@ const Cartoes = () => {
               <Plus className="w-4 h-4" /> Adicionar Cartão
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl">
             <DialogHeader><DialogTitle className="font-display">{editingId ? "Editar Cartão" : "Novo Cartão"}</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-2">
               {!editingId && (

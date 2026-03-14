@@ -1087,7 +1087,7 @@ const Admin = () => {
 
               {/* Add/Edit Collaborator Dialog */}
               <Dialog open={collabDialogOpen} onOpenChange={setCollabDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl">
                   <DialogHeader>
                     <DialogTitle>{editCollabId ? "Editar Colaborador" : "Adicionar Colaborador"}</DialogTitle>
                   </DialogHeader>
@@ -1146,7 +1146,7 @@ const Admin = () => {
                 <DialogTrigger asChild>
                   <Button className="gradient-primary text-primary-foreground gap-2"><Plus className="w-4 h-4" /> Adicionar Banco</Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl">
                   <DialogHeader><DialogTitle>Novo Template de Banco</DialogTitle></DialogHeader>
                   <div className="grid gap-4 py-2">
                     <div><Label>Nome</Label><Input value={bankForm.nome} onChange={(e) => setBankForm({ ...bankForm, nome: e.target.value })} placeholder="Ex: Nubank" /></div>
@@ -1539,7 +1539,7 @@ const Admin = () => {
 
       {/* Create User Dialog */}
       <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle>Adicionar Usuário</DialogTitle>
           </DialogHeader>
@@ -1568,7 +1568,7 @@ const Admin = () => {
 
       {/* Edit User Dialog */}
       <Dialog open={editUserOpen} onOpenChange={setEditUserOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl">
           <DialogHeader><DialogTitle>Editar Usuário</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div><Label>Nome</Label><Input value={editUserForm.nome} onChange={(e) => setEditUserForm({ ...editUserForm, nome: e.target.value })} /></div>
