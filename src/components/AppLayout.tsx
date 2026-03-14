@@ -189,7 +189,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </aside>
 
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-3 z-40">
+      <header className="md:hidden fixed top-0 left-0 right-0 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-3 z-40 pt-[env(safe-area-inset-top)] h-[calc(3.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
           <MoneyLogo size="sm" />
         </div>
