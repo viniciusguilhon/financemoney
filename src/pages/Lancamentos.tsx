@@ -541,7 +541,7 @@ const Lancamentos = () => {
               <DialogTrigger asChild>
                 <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-1.5 text-xs" size="sm"><Plus className="w-3.5 h-3.5" /> Nova Meta</Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle className="font-display">{editingGoalId ? "Editar Meta" : "Nova Meta de Economia"}</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-2">
                   <div><Label>O que deseja comprar?</Label><Input placeholder="Ex: iPhone 16" value={goalForm.nome} onChange={(e) => setGoalForm({ ...goalForm, nome: e.target.value })} /></div>
