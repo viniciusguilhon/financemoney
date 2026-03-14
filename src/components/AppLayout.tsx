@@ -277,7 +277,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </nav>
 
       {/* Main Content */}
-      <main className={cn("flex-1 pt-14 md:pt-0 pb-16 md:pb-0 transition-all duration-200", mainMargin)}>
+      <main className={cn("flex-1 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 pb-16 md:pb-0 transition-all duration-200", mainMargin)}>
         <div className="p-3 md:p-8 max-w-7xl mx-auto">
           {children}
         </div>
