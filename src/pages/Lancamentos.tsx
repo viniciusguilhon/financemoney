@@ -218,7 +218,7 @@ const Lancamentos = () => {
                     <Plus className="w-3 h-3" /> Categoria
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-sm">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl">
                   <DialogHeader><DialogTitle>Nova Categoria</DialogTitle></DialogHeader>
                   <div className="grid gap-3 py-2">
                     <div><Label>Nome</Label><Input value={newCat.nome} onChange={(e) => setNewCat({ ...newCat, nome: e.target.value })} /></div>
