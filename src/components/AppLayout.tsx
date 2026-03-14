@@ -189,7 +189,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </aside>
 
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-3 z-40">
+      <header className="md:hidden fixed top-0 left-0 right-0 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-3 z-40 pt-[env(safe-area-inset-top)] h-[calc(3.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
           <MoneyLogo size="sm" />
         </div>
@@ -210,7 +210,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-30 bg-foreground/50" onClick={() => setMobileOpen(false)}>
           <div
-            className="absolute top-14 left-0 right-0 bg-sidebar border-b border-sidebar-border p-3 space-y-1 animate-fade-in"
+            className="absolute top-[calc(3.5rem+env(safe-area-inset-top))] left-0 right-0 bg-sidebar border-b border-sidebar-border p-3 space-y-1 animate-fade-in"
             onClick={(e) => e.stopPropagation()}
           >
             {navItems.map((item) => {
@@ -277,7 +277,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </nav>
 
       {/* Main Content */}
-      <main className={cn("flex-1 pt-14 md:pt-0 pb-16 md:pb-0 transition-all duration-200", mainMargin)}>
+      <main className={cn("flex-1 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 pb-16 md:pb-0 transition-all duration-200", mainMargin)}>
         <div className="p-3 md:p-8 max-w-7xl mx-auto">
           {children}
         </div>
