@@ -1146,7 +1146,7 @@ const Admin = () => {
                 <DialogTrigger asChild>
                   <Button className="gradient-primary text-primary-foreground gap-2"><Plus className="w-4 h-4" /> Adicionar Banco</Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl">
                   <DialogHeader><DialogTitle>Novo Template de Banco</DialogTitle></DialogHeader>
                   <div className="grid gap-4 py-2">
                     <div><Label>Nome</Label><Input value={bankForm.nome} onChange={(e) => setBankForm({ ...bankForm, nome: e.target.value })} placeholder="Ex: Nubank" /></div>
