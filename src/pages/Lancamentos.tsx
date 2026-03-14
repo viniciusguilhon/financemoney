@@ -456,7 +456,7 @@ const Lancamentos = () => {
               <DialogTrigger asChild>
                 <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-1.5 text-xs" size="sm"><Plus className="w-3.5 h-3.5" /> Nova Conta</Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-sm">
+              <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl">
                 <DialogHeader><DialogTitle>{editingBillId ? "Editar Conta" : "Nova Conta a Pagar/Receber"}</DialogTitle></DialogHeader>
                 <div className="grid gap-3 py-2">
                   <div><Label>Descrição</Label><Input value={billForm.desc} onChange={(e) => setBillForm({ ...billForm, desc: e.target.value })} /></div>

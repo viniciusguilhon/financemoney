@@ -1568,7 +1568,7 @@ const Admin = () => {
 
       {/* Edit User Dialog */}
       <Dialog open={editUserOpen} onOpenChange={setEditUserOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl">
           <DialogHeader><DialogTitle>Editar Usuário</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div><Label>Nome</Label><Input value={editUserForm.nome} onChange={(e) => setEditUserForm({ ...editUserForm, nome: e.target.value })} /></div>
