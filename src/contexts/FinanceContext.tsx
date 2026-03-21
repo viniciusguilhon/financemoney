@@ -218,6 +218,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     if (billsRes.data) setBills(billsRes.data.map(mapBill));
     if (invRes.data) setInvestments(invRes.data.map(mapInv));
     if (goalsRes.data) setSavingsGoals(goalsRes.data.map(mapGoal));
+    if (debtsRes.data) setDebts(debtsRes.data.map(mapDebt));
     if (catRes.data && catRes.data.length > 0) {
       setCategories(catRes.data.map(mapCat));
     } else if (user) {
