@@ -257,6 +257,15 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     valorAlvo: Number(r.valor_alvo), valorAtual: Number(r.valor_atual),
     imageUrl: r.image_url,
   });
+  const mapDebt = (r: any): Debt => ({
+    id: r.id, nome: r.nome, descricao: r.descricao,
+    valorTotal: Number(r.valor_total), valorPago: Number(r.valor_pago),
+    data: r.data,
+  });
+    id: r.id, nome: r.nome, descricao: r.descricao,
+    valorAlvo: Number(r.valor_alvo), valorAtual: Number(r.valor_atual),
+    imageUrl: r.image_url,
+  });
 
   const getMonthTransactions = useCallback(
     () => transactions.filter((t) => t.mesAno === currentMesAno),
