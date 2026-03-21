@@ -87,6 +87,15 @@ export interface SavingsGoal {
   imageUrl?: string;
 }
 
+export interface Debt {
+  id: string;
+  nome: string;
+  descricao: string;
+  valorTotal: number;
+  valorPago: number;
+  data: string;
+}
+
 const defaultCategories: Category[] = [
   { id: "1", nome: "Mercado", tipo: "saida" },
   { id: "2", nome: "Farmácia", tipo: "saida" },
