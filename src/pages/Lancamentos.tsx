@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from "react";
-import { Plus, Search, ArrowUpRight, ArrowDownRight, Check, Clock, Pencil, Trash2, Receipt, Target, Upload, Filter, Trophy, Medal, Star } from "lucide-react";
+import { Plus, Search, ArrowUpRight, ArrowDownRight, Check, Clock, Pencil, Trash2, Receipt, Target, Upload, Filter, Trophy, Medal, Star, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { useFinance, Transaction, SavingsGoal } from "@/contexts/FinanceContext";
+import { useFinance, Transaction, SavingsGoal, Debt } from "@/contexts/FinanceContext";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -25,6 +25,7 @@ const Lancamentos = () => {
     addCategory,
     getMonthBills, addBill, updateBill, deleteBill,
     savingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
+    debts, addDebt, updateDebt, deleteDebt,
     currentMonth, currentYear,
   } = useFinance();
   const { user } = useAuth();
@@ -60,6 +61,12 @@ const Lancamentos = () => {
   const [goalCropperSrc, setGoalCropperSrc] = useState("");
   const goalFileRef = useRef<HTMLInputElement>(null);
 
+  // Debt state
+  const [debtOpen, setDebtOpen] = useState(false);
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
+  const [deleteDebtId, setDeleteDebtId] = useState<string | null>(null);
+  const [debtForm, setDebtForm] = useState({ nome: "", descricao: "", valorTotal: "", valorPago: "", data: "" });
+
   const [form, setForm] = useState({
     data: "", categoria: "", descricao: "", valor: "", tipo: "saida" as "entrada" | "saida",
     conta: "", parcelas: "1",
@@ -87,6 +94,32 @@ const Lancamentos = () => {
     setGoalImageFile(null);
     setGoalImagePreview("");
     setEditingGoalId(null);
+  };
+
+  const resetDebtForm = () => {
+    setDebtForm({ nome: "", descricao: "", valorTotal: "", valorPago: "", data: "" });
+    setEditingDebtId(null);
+  };
+
+  const openEditDebt = (d: Debt) => {
+    setDebtForm({ nome: d.nome, descricao: d.descricao, valorTotal: d.valorTotal.toString(), valorPago: d.valorPago.toString(), data: d.data });
+    setEditingDebtId(d.id);
+    setDebtOpen(true);
+  };
+
+  const handleDebtSubmit = () => {
+    if (!debtForm.nome || !debtForm.valorTotal) return;
+    const data = {
+      nome: debtForm.nome,
+      descricao: debtForm.descricao,
+      valorTotal: parseFloat(debtForm.valorTotal),
+      valorPago: parseFloat(debtForm.valorPago || "0"),
+      data: debtForm.data,
+    };
+    if (editingDebtId) updateDebt(editingDebtId, data);
+    else addDebt(data);
+    setDebtOpen(false);
+    resetDebtForm();
   };
 
   const openEdit = (tx: Transaction) => {
@@ -197,10 +230,11 @@ const Lancamentos = () => {
 
       <Tabs defaultValue="transacoes" className="w-full overflow-hidden">
         <TabsList className="w-full sm:w-auto overflow-x-auto">
-          <TabsTrigger value="transacoes" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><ArrowUpRight className="w-4 h-4" /> Transações</TabsTrigger>
-          <TabsTrigger value="rendas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><ArrowDownRight className="w-4 h-4" /> Rendas</TabsTrigger>
-          <TabsTrigger value="contas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><Receipt className="w-4 h-4" /> Contas</TabsTrigger>
-          <TabsTrigger value="metas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><Target className="w-4 h-4" /> Metas</TabsTrigger>
+          <TabsTrigger value="transacoes" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><ArrowUpRight className="w-4 h-4" /> Transações</TabsTrigger>
+          <TabsTrigger value="rendas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><ArrowDownRight className="w-4 h-4" /> Rendas</TabsTrigger>
+          <TabsTrigger value="contas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><Receipt className="w-4 h-4" /> Contas</TabsTrigger>
+          <TabsTrigger value="dividas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><Banknote className="w-4 h-4" /> Dívidas</TabsTrigger>
+          <TabsTrigger value="metas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><Target className="w-4 h-4" /> Metas</TabsTrigger>
         </TabsList>
 
         {/* Tab: Transações */}
@@ -534,6 +568,76 @@ const Lancamentos = () => {
           </div>
         </TabsContent>
 
+        {/* Tab: Dívidas */}
+        <TabsContent value="dividas" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <Dialog open={debtOpen} onOpenChange={(o) => { setDebtOpen(o); if (!o) resetDebtForm(); }}>
+              <DialogTrigger asChild>
+                <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-1.5 text-xs" size="sm"><Plus className="w-3.5 h-3.5" /> Nova Dívida</Button>
+              </DialogTrigger>
+              <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader><DialogTitle className="font-display">{editingDebtId ? "Editar Dívida" : "Nova Dívida"}</DialogTitle></DialogHeader>
+                <div className="grid gap-4 py-2">
+                  <div><Label>Data</Label><Input type="date" value={debtForm.data} onChange={(e) => setDebtForm({ ...debtForm, data: e.target.value })} /></div>
+                  <div><Label>Nome</Label><Input placeholder="Ex: Empréstimo bancário" value={debtForm.nome} onChange={(e) => setDebtForm({ ...debtForm, nome: e.target.value })} /></div>
+                  <div><Label>Descrição (opcional)</Label><Input placeholder="Detalhes da dívida" value={debtForm.descricao} onChange={(e) => setDebtForm({ ...debtForm, descricao: e.target.value })} /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Valor Total (R$)</Label><Input type="number" step="0.01" placeholder="0,00" value={debtForm.valorTotal} onChange={(e) => setDebtForm({ ...debtForm, valorTotal: e.target.value })} /></div>
+                    <div><Label>Já Pago (R$)</Label><Input type="number" step="0.01" placeholder="0,00" value={debtForm.valorPago} onChange={(e) => setDebtForm({ ...debtForm, valorPago: e.target.value })} /></div>
+                  </div>
+                  <Button onClick={handleDebtSubmit} className="gradient-primary text-primary-foreground w-full">
+                    {editingDebtId ? "Salvar Alterações" : "Registrar Dívida"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {debts.length === 0 ? (
+            <div className="bg-card rounded-xl p-12 shadow-card text-center">
+              <Banknote className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">Nenhuma dívida cadastrada.</p>
+              <p className="text-xs text-muted-foreground mt-1">Registre suas dívidas para acompanhar o progresso de pagamento.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {debts.map((debt) => {
+                const pct = debt.valorTotal > 0 ? Math.min((debt.valorPago / debt.valorTotal) * 100, 100) : 0;
+                const quitada = pct >= 100;
+                return (
+                  <div key={debt.id} className={`bg-card rounded-xl p-4 shadow-card border ${quitada ? "border-primary/30" : "border-border"} space-y-3`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-foreground truncate">{debt.nome}</p>
+                          {quitada && <span className="text-[10px] bg-primary/15 text-primary rounded-full px-2 py-0.5 font-semibold">Quitada ✓</span>}
+                        </div>
+                        {debt.descricao && <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 truncate">{debt.descricao}</p>}
+                        {debt.data && <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(debt.data + "T00:00:00").toLocaleDateString("pt-BR")}</p>}
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button onClick={() => openEditDebt(debt)} className="p-1 md:p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => setDeleteDebtId(debt.id)} className="p-1 md:p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-[10px] md:text-xs mb-2">
+                        <span className="text-muted-foreground">Pago: {fmt(debt.valorPago)}</span>
+                        <span className="font-semibold text-foreground">Total: {fmt(debt.valorTotal)}</span>
+                      </div>
+                      <Progress value={pct} className="h-2.5 md:h-3" />
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-[10px] md:text-xs font-semibold text-primary">{pct.toFixed(0)}% pago</span>
+                        <span className="text-[10px] md:text-xs text-muted-foreground">Restante: {fmt(Math.max(debt.valorTotal - debt.valorPago, 0))}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
         {/* Tab: Metas de Economia */}
         <TabsContent value="metas" className="space-y-4 mt-4">
           <div className="flex justify-end">
@@ -712,6 +816,11 @@ const Lancamentos = () => {
         open={!!deleteGoalId}
         onOpenChange={(o) => !o && setDeleteGoalId(null)}
         onConfirm={() => { if (deleteGoalId) { deleteSavingsGoal(deleteGoalId); setDeleteGoalId(null); } }}
+      />
+      <ConfirmDialog
+        open={!!deleteDebtId}
+        onOpenChange={(o) => !o && setDeleteDebtId(null)}
+        onConfirm={() => { if (deleteDebtId) { deleteDebt(deleteDebtId); setDeleteDebtId(null); } }}
       />
 
       <ImageCropper

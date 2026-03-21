@@ -87,6 +87,15 @@ export interface SavingsGoal {
   imageUrl?: string;
 }
 
+export interface Debt {
+  id: string;
+  nome: string;
+  descricao: string;
+  valorTotal: number;
+  valorPago: number;
+  data: string;
+}
+
 const defaultCategories: Category[] = [
   { id: "1", nome: "Mercado", tipo: "saida" },
   { id: "2", nome: "Farmácia", tipo: "saida" },
@@ -145,6 +154,10 @@ interface FinanceContextType {
   addSavingsGoal: (g: Omit<SavingsGoal, "id">) => void;
   updateSavingsGoal: (id: string, g: Partial<SavingsGoal>) => void;
   deleteSavingsGoal: (id: string) => void;
+  debts: Debt[];
+  addDebt: (d: Omit<Debt, "id">) => void;
+  updateDebt: (id: string, d: Partial<Debt>) => void;
+  deleteDebt: (id: string) => void;
   loading: boolean;
   refreshData: () => Promise<void>;
 }
@@ -167,6 +180,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [categories, setCategories] = useState<Category[]>(defaultCategories);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
+  const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -187,7 +201,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const loadAll = async () => {
     if (!user) return;
     setLoading(true);
-    const [txRes, cardsRes, banksRes, billsRes, invRes, catRes, goalsRes] = await Promise.all([
+    const [txRes, cardsRes, banksRes, billsRes, invRes, catRes, goalsRes, debtsRes] = await Promise.all([
       supabase.from("transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("cards").select("*").eq("user_id", user.id),
       supabase.from("banks").select("*").eq("user_id", user.id),
@@ -195,6 +209,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       supabase.from("investments").select("*").eq("user_id", user.id),
       supabase.from("categories").select("*").eq("user_id", user.id),
       supabase.from("savings_goals").select("*").eq("user_id", user.id),
+      supabase.from("debts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
 
     if (txRes.data) setTransactions(txRes.data.map(mapTx));
@@ -203,6 +218,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     if (billsRes.data) setBills(billsRes.data.map(mapBill));
     if (invRes.data) setInvestments(invRes.data.map(mapInv));
     if (goalsRes.data) setSavingsGoals(goalsRes.data.map(mapGoal));
+    if (debtsRes.data) setDebts(debtsRes.data.map(mapDebt));
     if (catRes.data && catRes.data.length > 0) {
       setCategories(catRes.data.map(mapCat));
     } else if (user) {
@@ -240,6 +256,11 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     id: r.id, nome: r.nome, descricao: r.descricao,
     valorAlvo: Number(r.valor_alvo), valorAtual: Number(r.valor_atual),
     imageUrl: r.image_url,
+  });
+  const mapDebt = (r: any): Debt => ({
+    id: r.id, nome: r.nome, descricao: r.descricao,
+    valorTotal: Number(r.valor_total), valorPago: Number(r.valor_pago),
+    data: r.data,
   });
 
   const getMonthTransactions = useCallback(
@@ -452,6 +473,31 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     setSavingsGoals((prev) => prev.filter((x) => x.id !== id));
   };
 
+  const addDebt = async (d: Omit<Debt, "id">) => {
+    if (!user) return;
+    const { data } = await supabase.from("debts").insert({
+      user_id: user.id, nome: d.nome, descricao: d.descricao,
+      valor_total: d.valorTotal, valor_pago: d.valorPago, data: d.data,
+    }).select().single();
+    if (data) setDebts((prev) => [mapDebt(data), ...prev]);
+  };
+
+  const updateDebt = async (id: string, d: Partial<Debt>) => {
+    const updates: any = {};
+    if (d.nome !== undefined) updates.nome = d.nome;
+    if (d.descricao !== undefined) updates.descricao = d.descricao;
+    if (d.valorTotal !== undefined) updates.valor_total = d.valorTotal;
+    if (d.valorPago !== undefined) updates.valor_pago = d.valorPago;
+    if (d.data !== undefined) updates.data = d.data;
+    await supabase.from("debts").update(updates).eq("id", id);
+    setDebts((prev) => prev.map((x) => (x.id === id ? { ...x, ...d } : x)));
+  };
+
+  const deleteDebt = async (id: string) => {
+    await supabase.from("debts").delete().eq("id", id);
+    setDebts((prev) => prev.filter((x) => x.id !== id));
+  };
+
   const refreshData = useCallback(async () => {
     if (user) await loadAll();
   }, [user]);
@@ -465,8 +511,9 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     investments, addInvestment, updateInvestment, deleteInvestment,
     categories, addCategory, updateCategory, deleteCategory,
     savingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
+    debts, addDebt, updateDebt, deleteDebt,
     loading, refreshData,
-  }), [currentMonth, currentYear, currentMesAno, transactions, cards, banks, bills, investments, categories, savingsGoals, loading, refreshData, getMonthTransactions, getMonthBills]);
+  }), [currentMonth, currentYear, currentMesAno, transactions, cards, banks, bills, investments, categories, savingsGoals, debts, loading, refreshData, getMonthTransactions, getMonthBills]);
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
 };
