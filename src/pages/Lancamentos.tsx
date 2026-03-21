@@ -25,6 +25,7 @@ const Lancamentos = () => {
     addCategory,
     getMonthBills, addBill, updateBill, deleteBill,
     savingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
+    debts, addDebt, updateDebt, deleteDebt,
     currentMonth, currentYear,
   } = useFinance();
   const { user } = useAuth();
