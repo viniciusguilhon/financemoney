@@ -817,6 +817,11 @@ const Lancamentos = () => {
         onOpenChange={(o) => !o && setDeleteGoalId(null)}
         onConfirm={() => { if (deleteGoalId) { deleteSavingsGoal(deleteGoalId); setDeleteGoalId(null); } }}
       />
+      <ConfirmDialog
+        open={!!deleteDebtId}
+        onOpenChange={(o) => !o && setDeleteDebtId(null)}
+        onConfirm={() => { if (deleteDebtId) { deleteDebt(deleteDebtId); setDeleteDebtId(null); } }}
+      />
 
       <ImageCropper
         open={goalCropperOpen}
