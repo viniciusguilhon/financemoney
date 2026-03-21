@@ -473,6 +473,31 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     setSavingsGoals((prev) => prev.filter((x) => x.id !== id));
   };
 
+  const addDebt = async (d: Omit<Debt, "id">) => {
+    if (!user) return;
+    const { data } = await supabase.from("debts").insert({
+      user_id: user.id, nome: d.nome, descricao: d.descricao,
+      valor_total: d.valorTotal, valor_pago: d.valorPago, data: d.data,
+    }).select().single();
+    if (data) setDebts((prev) => [mapDebt(data), ...prev]);
+  };
+
+  const updateDebt = async (id: string, d: Partial<Debt>) => {
+    const updates: any = {};
+    if (d.nome !== undefined) updates.nome = d.nome;
+    if (d.descricao !== undefined) updates.descricao = d.descricao;
+    if (d.valorTotal !== undefined) updates.valor_total = d.valorTotal;
+    if (d.valorPago !== undefined) updates.valor_pago = d.valorPago;
+    if (d.data !== undefined) updates.data = d.data;
+    await supabase.from("debts").update(updates).eq("id", id);
+    setDebts((prev) => prev.map((x) => (x.id === id ? { ...x, ...d } : x)));
+  };
+
+  const deleteDebt = async (id: string) => {
+    await supabase.from("debts").delete().eq("id", id);
+    setDebts((prev) => prev.filter((x) => x.id !== id));
+  };
+
   const refreshData = useCallback(async () => {
     if (user) await loadAll();
   }, [user]);
@@ -486,8 +511,9 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     investments, addInvestment, updateInvestment, deleteInvestment,
     categories, addCategory, updateCategory, deleteCategory,
     savingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal,
+    debts, addDebt, updateDebt, deleteDebt,
     loading, refreshData,
-  }), [currentMonth, currentYear, currentMesAno, transactions, cards, banks, bills, investments, categories, savingsGoals, loading, refreshData, getMonthTransactions, getMonthBills]);
+  }), [currentMonth, currentYear, currentMesAno, transactions, cards, banks, bills, investments, categories, savingsGoals, debts, loading, refreshData, getMonthTransactions, getMonthBills]);
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
 };
