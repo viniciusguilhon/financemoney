@@ -568,6 +568,76 @@ const Lancamentos = () => {
           </div>
         </TabsContent>
 
+        {/* Tab: Dívidas */}
+        <TabsContent value="dividas" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <Dialog open={debtOpen} onOpenChange={(o) => { setDebtOpen(o); if (!o) resetDebtForm(); }}>
+              <DialogTrigger asChild>
+                <Button className="gradient-primary text-primary-foreground hover:opacity-90 gap-1.5 text-xs" size="sm"><Plus className="w-3.5 h-3.5" /> Nova Dívida</Button>
+              </DialogTrigger>
+              <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader><DialogTitle className="font-display">{editingDebtId ? "Editar Dívida" : "Nova Dívida"}</DialogTitle></DialogHeader>
+                <div className="grid gap-4 py-2">
+                  <div><Label>Data</Label><Input type="date" value={debtForm.data} onChange={(e) => setDebtForm({ ...debtForm, data: e.target.value })} /></div>
+                  <div><Label>Nome</Label><Input placeholder="Ex: Empréstimo bancário" value={debtForm.nome} onChange={(e) => setDebtForm({ ...debtForm, nome: e.target.value })} /></div>
+                  <div><Label>Descrição (opcional)</Label><Input placeholder="Detalhes da dívida" value={debtForm.descricao} onChange={(e) => setDebtForm({ ...debtForm, descricao: e.target.value })} /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Valor Total (R$)</Label><Input type="number" step="0.01" placeholder="0,00" value={debtForm.valorTotal} onChange={(e) => setDebtForm({ ...debtForm, valorTotal: e.target.value })} /></div>
+                    <div><Label>Já Pago (R$)</Label><Input type="number" step="0.01" placeholder="0,00" value={debtForm.valorPago} onChange={(e) => setDebtForm({ ...debtForm, valorPago: e.target.value })} /></div>
+                  </div>
+                  <Button onClick={handleDebtSubmit} className="gradient-primary text-primary-foreground w-full">
+                    {editingDebtId ? "Salvar Alterações" : "Registrar Dívida"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {debts.length === 0 ? (
+            <div className="bg-card rounded-xl p-12 shadow-card text-center">
+              <Banknote className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">Nenhuma dívida cadastrada.</p>
+              <p className="text-xs text-muted-foreground mt-1">Registre suas dívidas para acompanhar o progresso de pagamento.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {debts.map((debt) => {
+                const pct = debt.valorTotal > 0 ? Math.min((debt.valorPago / debt.valorTotal) * 100, 100) : 0;
+                const quitada = pct >= 100;
+                return (
+                  <div key={debt.id} className={`bg-card rounded-xl p-4 shadow-card border ${quitada ? "border-primary/30" : "border-border"} space-y-3`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-foreground truncate">{debt.nome}</p>
+                          {quitada && <span className="text-[10px] bg-primary/15 text-primary rounded-full px-2 py-0.5 font-semibold">Quitada ✓</span>}
+                        </div>
+                        {debt.descricao && <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 truncate">{debt.descricao}</p>}
+                        {debt.data && <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(debt.data + "T00:00:00").toLocaleDateString("pt-BR")}</p>}
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button onClick={() => openEditDebt(debt)} className="p-1 md:p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => setDeleteDebtId(debt.id)} className="p-1 md:p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-[10px] md:text-xs mb-2">
+                        <span className="text-muted-foreground">Pago: {fmt(debt.valorPago)}</span>
+                        <span className="font-semibold text-foreground">Total: {fmt(debt.valorTotal)}</span>
+                      </div>
+                      <Progress value={pct} className="h-2.5 md:h-3" />
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-[10px] md:text-xs font-semibold text-primary">{pct.toFixed(0)}% pago</span>
+                        <span className="text-[10px] md:text-xs text-muted-foreground">Restante: {fmt(Math.max(debt.valorTotal - debt.valorPago, 0))}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
         {/* Tab: Metas de Economia */}
         <TabsContent value="metas" className="space-y-4 mt-4">
           <div className="flex justify-end">
