@@ -262,10 +262,6 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     valorTotal: Number(r.valor_total), valorPago: Number(r.valor_pago),
     data: r.data,
   });
-    id: r.id, nome: r.nome, descricao: r.descricao,
-    valorAlvo: Number(r.valor_alvo), valorAtual: Number(r.valor_atual),
-    imageUrl: r.image_url,
-  });
 
   const getMonthTransactions = useCallback(
     () => transactions.filter((t) => t.mesAno === currentMesAno),
