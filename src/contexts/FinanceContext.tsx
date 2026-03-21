@@ -154,6 +154,10 @@ interface FinanceContextType {
   addSavingsGoal: (g: Omit<SavingsGoal, "id">) => void;
   updateSavingsGoal: (id: string, g: Partial<SavingsGoal>) => void;
   deleteSavingsGoal: (id: string) => void;
+  debts: Debt[];
+  addDebt: (d: Omit<Debt, "id">) => void;
+  updateDebt: (id: string, d: Partial<Debt>) => void;
+  deleteDebt: (id: string) => void;
   loading: boolean;
   refreshData: () => Promise<void>;
 }
