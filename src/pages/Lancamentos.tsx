@@ -61,6 +61,12 @@ const Lancamentos = () => {
   const [goalCropperSrc, setGoalCropperSrc] = useState("");
   const goalFileRef = useRef<HTMLInputElement>(null);
 
+  // Debt state
+  const [debtOpen, setDebtOpen] = useState(false);
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
+  const [deleteDebtId, setDeleteDebtId] = useState<string | null>(null);
+  const [debtForm, setDebtForm] = useState({ nome: "", descricao: "", valorTotal: "", valorPago: "", data: "" });
+
   const [form, setForm] = useState({
     data: "", categoria: "", descricao: "", valor: "", tipo: "saida" as "entrada" | "saida",
     conta: "", parcelas: "1",
