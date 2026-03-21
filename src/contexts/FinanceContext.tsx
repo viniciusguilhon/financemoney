@@ -201,7 +201,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const loadAll = async () => {
     if (!user) return;
     setLoading(true);
-    const [txRes, cardsRes, banksRes, billsRes, invRes, catRes, goalsRes] = await Promise.all([
+    const [txRes, cardsRes, banksRes, billsRes, invRes, catRes, goalsRes, debtsRes] = await Promise.all([
       supabase.from("transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("cards").select("*").eq("user_id", user.id),
       supabase.from("banks").select("*").eq("user_id", user.id),
@@ -209,6 +209,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       supabase.from("investments").select("*").eq("user_id", user.id),
       supabase.from("categories").select("*").eq("user_id", user.id),
       supabase.from("savings_goals").select("*").eq("user_id", user.id),
+      supabase.from("debts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
 
     if (txRes.data) setTransactions(txRes.data.map(mapTx));
