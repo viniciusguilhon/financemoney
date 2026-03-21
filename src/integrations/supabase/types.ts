@@ -218,6 +218,39 @@ export type Database = {
         }
         Relationships: []
       }
+      debts: {
+        Row: {
+          created_at: string
+          data: string
+          descricao: string
+          id: string
+          nome: string
+          user_id: string
+          valor_pago: number
+          valor_total: number
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          descricao?: string
+          id?: string
+          nome: string
+          user_id: string
+          valor_pago?: number
+          valor_total?: number
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          descricao?: string
+          id?: string
+          nome?: string
+          user_id?: string
+          valor_pago?: number
+          valor_total?: number
+        }
+        Relationships: []
+      }
       investments: {
         Row: {
           categoria: string
