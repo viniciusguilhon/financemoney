@@ -96,6 +96,32 @@ const Lancamentos = () => {
     setEditingGoalId(null);
   };
 
+  const resetDebtForm = () => {
+    setDebtForm({ nome: "", descricao: "", valorTotal: "", valorPago: "", data: "" });
+    setEditingDebtId(null);
+  };
+
+  const openEditDebt = (d: Debt) => {
+    setDebtForm({ nome: d.nome, descricao: d.descricao, valorTotal: d.valorTotal.toString(), valorPago: d.valorPago.toString(), data: d.data });
+    setEditingDebtId(d.id);
+    setDebtOpen(true);
+  };
+
+  const handleDebtSubmit = () => {
+    if (!debtForm.nome || !debtForm.valorTotal) return;
+    const data = {
+      nome: debtForm.nome,
+      descricao: debtForm.descricao,
+      valorTotal: parseFloat(debtForm.valorTotal),
+      valorPago: parseFloat(debtForm.valorPago || "0"),
+      data: debtForm.data,
+    };
+    if (editingDebtId) updateDebt(editingDebtId, data);
+    else addDebt(data);
+    setDebtOpen(false);
+    resetDebtForm();
+  };
+
   const openEdit = (tx: Transaction) => {
     setForm({
       data: tx.data, categoria: tx.categoria, descricao: tx.descricao,
