@@ -230,10 +230,11 @@ const Lancamentos = () => {
 
       <Tabs defaultValue="transacoes" className="w-full overflow-hidden">
         <TabsList className="w-full sm:w-auto overflow-x-auto">
-          <TabsTrigger value="transacoes" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><ArrowUpRight className="w-4 h-4" /> Transações</TabsTrigger>
-          <TabsTrigger value="rendas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><ArrowDownRight className="w-4 h-4" /> Rendas</TabsTrigger>
-          <TabsTrigger value="contas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><Receipt className="w-4 h-4" /> Contas</TabsTrigger>
-          <TabsTrigger value="metas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-3 sm:px-4 flex-shrink-0"><Target className="w-4 h-4" /> Metas</TabsTrigger>
+          <TabsTrigger value="transacoes" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><ArrowUpRight className="w-4 h-4" /> Transações</TabsTrigger>
+          <TabsTrigger value="rendas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><ArrowDownRight className="w-4 h-4" /> Rendas</TabsTrigger>
+          <TabsTrigger value="contas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><Receipt className="w-4 h-4" /> Contas</TabsTrigger>
+          <TabsTrigger value="dividas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><Banknote className="w-4 h-4" /> Dívidas</TabsTrigger>
+          <TabsTrigger value="metas" className="gap-1.5 text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 flex-shrink-0"><Target className="w-4 h-4" /> Metas</TabsTrigger>
         </TabsList>
 
         {/* Tab: Transações */}
