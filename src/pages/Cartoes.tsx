@@ -89,8 +89,12 @@ const VirtualCard = ({ card, template, onEdit, onDelete }: { card: Card; templat
       <div className="mt-3 bg-card rounded-xl p-4 shadow-card border border-border">
         <div className="space-y-2">
           <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Fatura Atual</span>
-            <span className="font-bold text-foreground">{fmt(card.usado)}</span>
+            <span className="text-muted-foreground">Limite Total</span>
+            <span className="font-semibold text-foreground">{fmt(card.limite)}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground">Limite Disponível</span>
+            <span className="font-bold text-success">{fmt(disponivel)}</span>
           </div>
           <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
             <div
@@ -101,13 +105,13 @@ const VirtualCard = ({ card, template, onEdit, onDelete }: { card: Card; templat
               }}
             />
           </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Disponível</span>
-            <span className="font-bold text-success">{fmt(disponivel)}</span>
-          </div>
           <div className="flex justify-between text-xs pt-1 border-t border-border">
-            <span className="text-muted-foreground">Limite Total</span>
-            <span className="font-semibold text-foreground">{fmt(card.limite)}</span>
+            <span className="text-muted-foreground">Vencimento</span>
+            <span className="font-semibold text-foreground">Dia {String(card.vencimento).padStart(2, "0")}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground">Fatura Atual</span>
+            <span className="font-bold text-warning">{fmt(card.usado)}</span>
           </div>
         </div>
       </div>
