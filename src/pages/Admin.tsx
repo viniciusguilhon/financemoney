@@ -120,7 +120,7 @@ const Admin = () => {
   const customLogoRef = useRef<HTMLInputElement>(null);
 
   // Collaborators state
-  interface Collaborator { id: string; email: string; nome: string; permissions: string[]; created_at: string; }
+  interface Collaborator { id: string; email: string; nome: string; permissions: string[]; created_at: string; isOwner?: boolean; }
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [collabDialogOpen, setCollabDialogOpen] = useState(false);
   const [collabForm, setCollabForm] = useState({ email: "", nome: "", permissions: [] as string[] });
