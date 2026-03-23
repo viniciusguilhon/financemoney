@@ -570,6 +570,41 @@ const Lancamentos = () => {
 
         {/* Tab: Dívidas */}
         <TabsContent value="dividas" className="space-y-4 mt-4">
+          {/* Summary */}
+          {debts.length > 0 && (() => {
+            const totalDividas = debts.reduce((s, d) => s + d.valorTotal, 0);
+            const totalPago = debts.reduce((s, d) => s + d.valorPago, 0);
+            const totalRestante = Math.max(totalDividas - totalPago, 0);
+            const pctGeral = totalDividas > 0 ? Math.min((totalPago / totalDividas) * 100, 100) : 0;
+            const quitadas = debts.filter(d => d.valorTotal > 0 && d.valorPago >= d.valorTotal).length;
+            return (
+              <div className="bg-card rounded-2xl p-4 shadow-card border border-border space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-2">
+                    <Banknote className="w-4 h-4 text-primary" /> Resumo de Dívidas
+                  </h3>
+                  <span className="text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-semibold">{quitadas}/{debts.length} quitadas</span>
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Total</p>
+                    <p className="text-xs font-bold text-foreground">{fmt(totalDividas)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Pago</p>
+                    <p className="text-xs font-bold text-primary">{fmt(totalPago)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Restante</p>
+                    <p className="text-xs font-bold text-destructive">{fmt(totalRestante)}</p>
+                  </div>
+                </div>
+                <Progress value={pctGeral} className="h-2.5" />
+                <p className="text-[10px] text-center text-muted-foreground">{pctGeral.toFixed(0)}% do total já foi pago</p>
+              </div>
+            );
+          })()}
+
           <div className="flex justify-end">
             <Dialog open={debtOpen} onOpenChange={(o) => { setDebtOpen(o); if (!o) resetDebtForm(); }}>
               <DialogTrigger asChild>
