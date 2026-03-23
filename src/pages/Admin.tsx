@@ -535,9 +535,12 @@ const Admin = () => {
       created_at: new Date().toISOString(),
     };
     if (editCollabId) {
-      setCollaborators(prev => prev.map(c => c.id === editCollabId ? newCollab : c));
+      setCollaborators(prev => prev.map(c => c.id === editCollabId ? { ...c, ...newCollab, isOwner: c.isOwner } : c));
       setEditCollabId(null);
     } else {
+      // First collaborator becomes owner automatically
+      const hasOwner = collaborators.some(c => c.isOwner);
+      if (!hasOwner) newCollab.isOwner = true;
       setCollaborators(prev => [...prev, newCollab]);
     }
     setCollabForm({ email: "", nome: "", permissions: [] });
