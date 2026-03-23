@@ -545,7 +545,19 @@ const Admin = () => {
   };
 
   const handleDeleteCollaborator = (id: string) => {
+    const collab = collaborators.find(c => c.id === id);
+    if (collab?.isOwner) {
+      toast({ title: "O owner não pode ser removido", variant: "destructive" });
+      return;
+    }
     setCollaborators(prev => prev.filter(c => c.id !== id));
+  };
+
+  const handleTransferOwnership = (id: string) => {
+    setCollaborators(prev => prev.map(c => ({
+      ...c,
+      isOwner: c.id === id,
+    })));
   };
 
   const togglePermission = (perm: string) => {
