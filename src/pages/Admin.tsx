@@ -1046,33 +1046,54 @@ const Admin = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {collaborators.map((collab) => (
-                    <div key={collab.id} className="bg-card rounded-2xl p-4 border border-border shadow-card">
+                  {/* Sort: owner first */}
+                  {[...collaborators].sort((a, b) => (b.isOwner ? 1 : 0) - (a.isOwner ? 1 : 0)).map((collab) => (
+                    <div key={collab.id} className={`bg-card rounded-2xl p-4 border shadow-card ${collab.isOwner ? "border-yellow-500/40 ring-1 ring-yellow-500/20" : "border-border"}`}>
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <UserCog className="w-5 h-5 text-primary" />
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${collab.isOwner ? "bg-yellow-500/15" : "bg-primary/10"}`}>
+                          {collab.isOwner ? <Crown className="w-5 h-5 text-yellow-500" /> : <UserCog className="w-5 h-5 text-primary" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-semibold text-foreground text-sm">{collab.nome || "Sem nome"}</h4>
+                            {collab.isOwner && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 text-[10px] font-bold">
+                                <Crown className="w-3 h-3" /> Owner
+                              </span>
+                            )}
                             {collab.email && <span className="text-xs text-muted-foreground">{collab.email}</span>}
                           </div>
                           <div className="flex flex-wrap gap-1.5 mt-2">
-                            {collab.permissions.map((perm) => {
-                              const permInfo = availablePermissions.find(p => p.key === perm);
-                              return (
-                                <span key={perm} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
-                                  {permInfo && <permInfo.icon className="w-3 h-3" />}
-                                  {permInfo?.label || perm}
-                                </span>
-                              );
-                            })}
-                            {collab.permissions.length === 0 && (
-                              <span className="text-[10px] text-muted-foreground italic">Sem permissões definidas</span>
+                            {collab.isOwner ? (
+                              <span className="text-[10px] text-muted-foreground italic">Acesso total ao sistema</span>
+                            ) : (
+                              <>
+                                {collab.permissions.map((perm) => {
+                                  const permInfo = availablePermissions.find(p => p.key === perm);
+                                  return (
+                                    <span key={perm} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+                                      {permInfo && <permInfo.icon className="w-3 h-3" />}
+                                      {permInfo?.label || perm}
+                                    </span>
+                                  );
+                                })}
+                                {collab.permissions.length === 0 && (
+                                  <span className="text-[10px] text-muted-foreground italic">Sem permissões definidas</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
+                          {!collab.isOwner && (
+                            <button
+                              onClick={() => handleTransferOwnership(collab.id)}
+                              className="p-1.5 rounded-lg hover:bg-yellow-500/10 text-muted-foreground hover:text-yellow-600 transition-colors"
+                              title="Transferir ownership"
+                            >
+                              <Crown className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setEditCollabId(collab.id);
@@ -1083,12 +1104,14 @@ const Admin = () => {
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button
-                            onClick={() => handleDeleteCollaborator(collab.id)}
-                            className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {!collab.isOwner && (
+                            <button
+                              onClick={() => handleDeleteCollaborator(collab.id)}
+                              className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
