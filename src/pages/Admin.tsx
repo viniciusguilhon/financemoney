@@ -3,7 +3,7 @@ import {
   Eye, EyeOff, Plus, Trash2, Upload, Lock, CreditCard, Building2, MessageCircle,
   Settings, Users, User, Phone, Mail, LayoutDashboard, Pencil, Ban, ShieldCheck,
   KeyRound, Search, ChevronLeft, ChevronRight, UserPlus, UserX, Activity,
-  PlayCircle, Video, GripVertical, Image, X, Menu, UserCog, Shield, Check,
+  PlayCircle, Video, GripVertical, Image, X, Menu, UserCog, Shield, Check, Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
