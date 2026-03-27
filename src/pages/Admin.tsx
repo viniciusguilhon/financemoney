@@ -1479,6 +1479,106 @@ const Admin = () => {
             </>
           )}
 
+          {/* Export Data */}
+          {activeSection === "export" && (
+            <>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Exportar Dados</h1>
+                <p className="text-sm text-muted-foreground">Exporte dados do banco em CSV e copie o SQL das tabelas</p>
+              </div>
+
+              {/* CSV Export */}
+              <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Table2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-semibold text-foreground">Tabelas do Banco de Dados</h3>
+                      <p className="text-xs text-muted-foreground">Exporte qualquer tabela como arquivo CSV</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={loadExportTables} disabled={exportLoading} className="gap-2">
+                    {exportLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+                    {exportLoading ? "Carregando..." : "Carregar"}
+                  </Button>
+                </div>
+
+                {exportTables.length > 0 && (
+                  <div className="space-y-2">
+                    {exportTables.map((t) => (
+                      <div key={t.name} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
+                        <div className="flex items-center gap-3">
+                          <Table2 className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{tableDisplayNames[t.name] || t.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{t.name} · {t.count} registro{t.count !== 1 ? "s" : ""}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleExportCSV(t.name)}
+                          disabled={exportingTable === t.name}
+                          className="gap-2"
+                        >
+                          {exportingTable === t.name ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          CSV
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {exportTables.length === 0 && !exportLoading && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Clique em "Carregar" para listar as tabelas</p>
+                )}
+              </div>
+
+              {/* SQL Schema */}
+              <div className="bg-card rounded-2xl p-6 border border-border shadow-card space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <FileCode className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-semibold text-foreground">SQL Schema (Migração)</h3>
+                      <p className="text-xs text-muted-foreground">Gere o SQL CREATE TABLE para migrar as tabelas</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleLoadSQL} disabled={sqlLoading} className="gap-2">
+                    {sqlLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileCode className="w-4 h-4" />}
+                    {sqlLoading ? "Gerando..." : "Gerar SQL"}
+                  </Button>
+                </div>
+
+                {sqlSchema && (
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <pre className="bg-muted/80 border border-border rounded-xl p-4 text-xs text-foreground overflow-x-auto max-h-96 overflow-y-auto font-mono whitespace-pre-wrap">
+                        {sqlSchema}
+                      </pre>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleCopySQL}
+                        className="absolute top-3 right-3 gap-2"
+                      >
+                        {sqlCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        {sqlCopied ? "Copiado!" : "Copiar"}
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      💡 Use este SQL para recriar as tabelas em outro banco de dados. Inclui tipos, defaults, constraints e políticas RLS.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           {/* Settings */}
           {activeSection === "settings" && (
             <>
