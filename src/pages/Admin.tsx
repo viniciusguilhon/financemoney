@@ -467,6 +467,72 @@ const Admin = () => {
     reader.readAsDataURL(file);
   };
 
+  // Export functions
+  const loadExportTables = async () => {
+    try {
+      setExportLoading(true);
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-export?action=list-tables`, {
+        headers: { "x-admin-password": adminPassword },
+      });
+      if (res.ok) setExportTables(await res.json());
+    } catch (err: any) { toast({ title: "Erro ao carregar tabelas", variant: "destructive" }); }
+    finally { setExportLoading(false); }
+  };
+
+  const handleExportCSV = async (table: string) => {
+    try {
+      setExportingTable(table);
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-export?action=export-csv&table=${table}`, {
+        headers: { "x-admin-password": adminPassword },
+      });
+      if (!res.ok) throw new Error("Erro ao exportar");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${table}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast({ title: `${table}.csv exportado!` });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    finally { setExportingTable(null); }
+  };
+
+  const handleLoadSQL = async () => {
+    try {
+      setSqlLoading(true);
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-export?action=sql-schema`, {
+        headers: { "x-admin-password": adminPassword },
+      });
+      if (!res.ok) throw new Error("Erro ao carregar SQL");
+      const data = await res.json();
+      setSqlSchema(data.sql || "-- Nenhum schema encontrado");
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    finally { setSqlLoading(false); }
+  };
+
+  const handleCopySQL = () => {
+    navigator.clipboard.writeText(sqlSchema);
+    setSqlCopied(true);
+    toast({ title: "SQL copiado!" });
+    setTimeout(() => setSqlCopied(false), 2000);
+  };
+
+  const tableDisplayNames: Record<string, string> = {
+    profiles: "Perfis (Users)",
+    banks: "Bancos",
+    cards: "Cartões",
+    transactions: "Transações",
+    bills: "Contas a Pagar",
+    categories: "Categorias",
+    investments: "Investimentos",
+    savings_goals: "Metas de Economia",
+    debts: "Dívidas",
+    app_settings: "Configurações",
+    bank_templates: "Templates de Bancos",
+    card_templates: "Templates de Cartões",
+  };
+
   const colorOptions = [
     { key: "primary", label: "Cor Principal (Botões)", icon: "🎨" },
     { key: "dashboard", label: "Dashboard", icon: "📊" },
