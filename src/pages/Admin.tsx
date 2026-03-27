@@ -128,7 +128,14 @@ const Admin = () => {
   const [savingCollab, setSavingCollab] = useState(false);
   const [editCollabId, setEditCollabId] = useState<string | null>(null);
 
-  const availablePermissions = [
+  // Export data state
+  const [exportTables, setExportTables] = useState<{ name: string; count: number }[]>([]);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportingTable, setExportingTable] = useState<string | null>(null);
+  const [sqlSchema, setSqlSchema] = useState("");
+  const [sqlLoading, setSqlLoading] = useState(false);
+  const [sqlCopied, setSqlCopied] = useState(false);
+
     { key: "users", label: "Gerenciar Usuários", icon: Users },
     { key: "banks", label: "Gerenciar Bancos", icon: Building2 },
     { key: "cards", label: "Gerenciar Cartões", icon: CreditCard },
