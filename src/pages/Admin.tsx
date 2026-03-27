@@ -136,6 +136,7 @@ const Admin = () => {
   const [sqlLoading, setSqlLoading] = useState(false);
   const [sqlCopied, setSqlCopied] = useState(false);
 
+  const availablePermissions = [
     { key: "users", label: "Gerenciar Usuários", icon: Users },
     { key: "banks", label: "Gerenciar Bancos", icon: Building2 },
     { key: "cards", label: "Gerenciar Cartões", icon: CreditCard },
