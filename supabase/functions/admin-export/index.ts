@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-password",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-password, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const ALL_TABLES = [
@@ -47,10 +47,10 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        return new Response("", {
+        return new Response("(vazio)", {
           headers: {
             ...corsHeaders,
-            "Content-Type": "text/csv",
+            "Content-Type": "text/csv; charset=utf-8",
             "Content-Disposition": `attachment; filename="${table}.csv"`,
           },
         });
@@ -78,107 +78,97 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get SQL schema for all tables
+    // Get SQL schema using Supabase's built-in SQL via REST
     if (action === "sql-schema") {
-      const { data: columns, error } = await supabase.rpc("get_table_schemas").catch(() => ({ data: null, error: { message: "Function not found" } }));
-      
-      // Fallback: build schema from information_schema via raw query
       const schemaSQL: string[] = [];
-      
-      for (const table of ALL_TABLES) {
-        const { data: rows, error: fetchErr } = await supabase.from(table).select("*").limit(0);
-        // We'll build CREATE TABLE from known types
-      }
-
-      // Use a simpler approach: query information_schema
       const dbUrl = Deno.env.get("SUPABASE_DB_URL");
-      if (dbUrl) {
-        // Use postgres connection to get schema
-        const { default: postgres } = await import("https://deno.land/x/postgresjs@v3.4.4/mod.js");
-        const sql = postgres(dbUrl, { max: 1 });
-        
+      
+      if (!dbUrl) {
+        // Fallback: generate schema from data inspection
+        for (const table of ALL_TABLES) {
+          const { data, error } = await supabase.from(table).select("*").limit(1);
+          if (error || !data || data.length === 0) {
+            schemaSQL.push(`-- Tabela: ${table} (sem dados para inferir schema)`);
+            continue;
+          }
+          const row = data[0];
+          const cols = Object.entries(row).map(([key, val]) => {
+            let type = "text";
+            if (typeof val === "number") type = Number.isInteger(val) ? "integer" : "numeric";
+            else if (typeof val === "boolean") type = "boolean";
+            else if (typeof val === "object" && val !== null) type = "jsonb";
+            else if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T/.test(val)) type = "timestamp with time zone";
+            else if (typeof val === "string" && /^[0-9a-f]{8}-/.test(val)) type = "uuid";
+            return `  ${key} ${type}`;
+          });
+          schemaSQL.push(`CREATE TABLE public.${table} (\n${cols.join(",\n")}\n);`);
+        }
+      } else {
+        // Use pg connection
+        const { default: postgres } = await import("https://deno.land/x/postgresjs@v3.4.5/mod.js");
+        const sql = postgres(dbUrl, { max: 1, idle_timeout: 5 });
+
         try {
           for (const table of ALL_TABLES) {
             const cols = await sql`
-              SELECT column_name, data_type, is_nullable, column_default, udt_name
+              SELECT column_name, udt_name, is_nullable, column_default
               FROM information_schema.columns
               WHERE table_schema = 'public' AND table_name = ${table}
               ORDER BY ordinal_position
             `;
-            
             if (cols.length === 0) continue;
 
-            // Get primary key
             const pkResult = await sql`
               SELECT kcu.column_name
               FROM information_schema.table_constraints tc
-              JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name
+              JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
               WHERE tc.table_schema = 'public' AND tc.table_name = ${table} AND tc.constraint_type = 'PRIMARY KEY'
             `;
             const pkCols = pkResult.map((r: any) => r.column_name);
 
-            let createStmt = `CREATE TABLE public.${table} (\n`;
-            const colDefs: string[] = [];
-            
-            for (const col of cols) {
-              let typeName = col.udt_name;
-              if (typeName === "int4") typeName = "integer";
-              else if (typeName === "int8") typeName = "bigint";
-              else if (typeName === "float8") typeName = "double precision";
-              else if (typeName === "bool") typeName = "boolean";
-              else if (typeName === "timestamptz") typeName = "timestamp with time zone";
-              else if (typeName === "jsonb") typeName = "jsonb";
-              else if (typeName === "uuid") typeName = "uuid";
-              else if (typeName === "numeric") typeName = "numeric";
-              else if (typeName === "text") typeName = "text";
-              
-              let def = `  ${col.column_name} ${typeName}`;
+            const typeMap: Record<string, string> = {
+              int4: "integer", int8: "bigint", float8: "double precision",
+              bool: "boolean", timestamptz: "timestamp with time zone",
+              jsonb: "jsonb", uuid: "uuid", numeric: "numeric", text: "text",
+            };
+
+            const colDefs = cols.map((col: any) => {
+              const t = typeMap[col.udt_name] || col.udt_name;
+              let def = `  ${col.column_name} ${t}`;
               if (col.is_nullable === "NO") def += " NOT NULL";
               if (col.column_default) def += ` DEFAULT ${col.column_default}`;
-              colDefs.push(def);
-            }
-            
+              return def;
+            });
+
             if (pkCols.length > 0) {
               colDefs.push(`  PRIMARY KEY (${pkCols.join(", ")})`);
             }
-            
-            createStmt += colDefs.join(",\n");
-            createStmt += "\n);";
-            
-            // Get RLS status
+
+            let stmt = `CREATE TABLE public.${table} (\n${colDefs.join(",\n")}\n);`;
+
             const rlsResult = await sql`
-              SELECT relrowsecurity FROM pg_class WHERE relname = ${table} AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+              SELECT relrowsecurity FROM pg_class 
+              WHERE relname = ${table} 
+              AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
             `;
             if (rlsResult.length > 0 && rlsResult[0].relrowsecurity) {
-              createStmt += `\n\nALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY;`;
+              stmt += `\n\nALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY;`;
             }
 
-            // Get RLS policies
-            const policies = await sql`
-              SELECT polname, polcmd, polqual::text, polwithcheck::text
-              FROM pg_policy
-              WHERE polrelid = (SELECT oid FROM pg_class WHERE relname = ${table} AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public'))
-            `;
-            
-            for (const pol of policies) {
-              const cmdMap: Record<string, string> = { r: "SELECT", a: "INSERT", w: "UPDATE", d: "DELETE", "*": "ALL" };
-              createStmt += `\n\nCREATE POLICY "${pol.polname}" ON public.${table}\n  FOR ${cmdMap[pol.polcmd] || "ALL"}\n  TO public`;
-              if (pol.polqual) createStmt += `\n  USING (${pol.polqual})`;
-              if (pol.polwithcheck) createStmt += `\n  WITH CHECK (${pol.polwithcheck})`;
-              createStmt += ";";
-            }
-
-            schemaSQL.push(createStmt);
+            schemaSQL.push(stmt);
           }
-          
           await sql.end();
         } catch (e) {
-          await sql.end();
-          throw e;
+          try { await sql.end(); } catch {}
+          // Fallback to data-based inference
+          for (const table of ALL_TABLES) {
+            if (schemaSQL.some(s => s.includes(`public.${table}`))) continue;
+            schemaSQL.push(`-- Tabela: ${table} (erro ao obter schema: ${e.message})`);
+          }
         }
       }
 
-      return new Response(JSON.stringify({ sql: schemaSQL.join("\n\n-- ---\n\n") }), {
+      return new Response(JSON.stringify({ sql: schemaSQL.join("\n\n-- ----------------------------------------\n\n") }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
