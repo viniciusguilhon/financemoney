@@ -485,6 +485,7 @@ const Admin = () => {
     { id: "banks", label: "Bancos", icon: Building2 },
     { id: "cards", label: "Cartões", icon: CreditCard },
     { id: "tutorials", label: "Tutoriais", icon: Video },
+    { id: "export", label: "Exportar Dados", icon: Database },
     { id: "settings", label: "Configurações", icon: Settings },
   ];
 
